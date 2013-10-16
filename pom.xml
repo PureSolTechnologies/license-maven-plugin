@@ -145,6 +145,7 @@
 	</build>
 
 	<modules>
+		<module>license-plugin</module>
 		<module>docbook-plugin</module>
 	</modules>
 
