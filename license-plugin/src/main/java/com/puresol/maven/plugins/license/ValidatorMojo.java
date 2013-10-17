@@ -51,6 +51,8 @@ phase = LifecyclePhase.VALIDATE//
 )
 public class ValidatorMojo extends AbstractMojo {
 
+	private static final String TEST_SCOPE_NAME = "test";
+
 	@Parameter(required = false, defaultValue = "${project.remoteArtifactRepositories}", readonly = true)
 	private List<ArtifactRepository> remoteArtifactRepositories;
 
@@ -65,6 +67,9 @@ public class ValidatorMojo extends AbstractMojo {
 
 	@Parameter(alias = "recursive", required = false, defaultValue = "true")
 	private boolean recursive;
+
+	@Parameter(alias = "skipTestScope", required = false, defaultValue = "false")
+	private boolean skipTestScope;
 
 	@Component
 	private MavenProject project;
@@ -90,7 +95,7 @@ public class ValidatorMojo extends AbstractMojo {
 		Set<Artifact> artifacts = retrieveArtifacts();
 		boolean valid = validateArtifacts(artifacts);
 		if (!valid) {
-			throw new MojoFailureException("Invalid licensed were found!");
+			throw new MojoFailureException("Invalid license(s) was/were found!");
 		}
 	}
 
@@ -98,56 +103,97 @@ public class ValidatorMojo extends AbstractMojo {
 		Set<Artifact> artifacts;
 		if (recursive) {
 			@SuppressWarnings("unchecked")
-			Set<Artifact> set = project.getDependencyArtifacts();
+			Set<Artifact> set = project.getArtifacts();
 			artifacts = set;
 		} else {
 			@SuppressWarnings("unchecked")
-			Set<Artifact> set = project.getArtifacts();
+			Set<Artifact> set = project.getDependencyArtifacts();
 			artifacts = set;
 		}
 		return artifacts;
 	}
 
 	private boolean validateArtifacts(Set<Artifact> artifacts)
-			throws MojoExecutionException {
-		try {
-			boolean valid = true;
-			for (Artifact artifact : artifacts) {
-				if (!isArtifactValid(artifact)) {
-					valid = false;
-				}
-			}
-			return valid;
-		} catch (ProjectBuildingException e) {
-			throw new MojoExecutionException("Cannot create repository.", e);
-		}
-	}
-
-	private boolean isArtifactValid(Artifact artifact)
-			throws ProjectBuildingException {
-		MavenProject repository = projectBuilder.buildFromRepository(artifact,
-				remoteArtifactRepositories, localRepository);
-		@SuppressWarnings("unchecked")
-		List<License> l = repository.getLicenses();
-		List<License> licenses = l;
+			throws MojoExecutionException, MojoFailureException {
 		boolean valid = true;
-		for (License license : licenses) {
-			if (!isLicenseValid(license)) {
-				String groupId = artifact.getGroupId();
-				String artifactId = artifact.getArtifactId();
-				String version = artifact.getVersion();
-				String licenseName = license.getName();
-				log.error("Invalid or unknown license '" + licenseName
-						+ "' for artifact " + groupId + ":" + artifactId + ":"
-						+ version + " found.");
+		for (Artifact artifact : artifacts) {
+			if (!isArtifactValid(artifact)) {
 				valid = false;
 			}
 		}
 		return valid;
 	}
 
+	private boolean isArtifactValid(Artifact artifact)
+			throws MojoFailureException, MojoExecutionException {
+		if (log.isDebugEnabled()) {
+			log.debug("Checking artifact '" + getArtifactIdentifier(artifact)
+					+ "'...");
+		}
+		if (skipTestScope) {
+			if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
+				if (log.isDebugEnabled()) {
+					log.debug("Artifact is in '" + TEST_SCOPE_NAME
+							+ "' scope and this scope is valid per default.");
+				}
+				return true;
+			}
+		}
+		boolean valid = true;
+		List<License> licenses = retrieveLicenses(artifact);
+		String artifactName = getArtifactIdentifier(artifact);
+		if (licenses.size() == 0) {
+			log.error("No license for artifact " + artifactName + " found.");
+			if (failFast) {
+				throw new MojoFailureException(
+						"Invalid license(s) was/were found!");
+			}
+			valid = false;
+		}
+		for (License license : licenses) {
+			if (!isLicenseValid(license)) {
+				String licenseName = license.getName();
+				log.error("Invalid or unknown license '" + licenseName
+						+ "' for artifact " + artifactName + " found.");
+				if (failFast) {
+					throw new MojoFailureException(
+							"Invalid license(s) was/were found!");
+				}
+				valid = false;
+			}
+		}
+		return valid;
+	}
+
+	private List<License> retrieveLicenses(Artifact artifact)
+			throws MojoExecutionException {
+		try {
+			MavenProject repository = projectBuilder.buildFromRepository(
+					artifact, remoteArtifactRepositories, localRepository);
+			@SuppressWarnings("unchecked")
+			List<License> licenses = repository.getLicenses();
+			return licenses;
+		} catch (ProjectBuildingException e) {
+			throw new MojoExecutionException("Cannot create repository.", e);
+		}
+	}
+
+	private String getArtifactIdentifier(Artifact artifact) {
+		String groupId = artifact.getGroupId();
+		String artifactId = artifact.getArtifactId();
+		String version = artifact.getVersion();
+		String artifactName = groupId + ":" + artifactId + ":" + version;
+		return artifactName;
+	}
+
 	private boolean isLicenseValid(License license) {
 		String licenseName = license.getName();
+		if (log.isDebugEnabled()) {
+			log.debug("Check license '" + licenseName + "'...");
+		}
+		if ((licenseName == null) || (licenseName.isEmpty())) {
+			return false;
+		}
 		return validLicenses.contains(licenseName);
 	}
 }
