@@ -16,14 +16,20 @@
 	<packaging>pom</packaging>
 
 	<name>PureSol Technologies' Maven Plugins</name>
+	<inceptionYear>2013</inceptionYear>
 	<url>http://puresol-technologies.com</url>
+
+	<description>This project contains Mojos (Maven Plugins) needed for PureSol Technologies builds.</description>
 
 	<organization>
 		<name>PureSol Technologies</name>
 		<url>http://puresol-technologies.com</url>
 	</organization>
 
-	<inceptionYear>2013</inceptionYear>
+	<issueManagement>
+		<system>Redmine</system>
+		<url>http://bugs</url>
+	</issueManagement>
 
 	<ciManagement>
 		<system>Jenkins</system>
@@ -31,7 +37,9 @@
 	</ciManagement>
 
 	<scm>
+		<connection>git@git:mojos</connection>
 		<url>http://git/gitweb/</url>
+		<tag>master</tag>
 	</scm>
 
 	<developers>
