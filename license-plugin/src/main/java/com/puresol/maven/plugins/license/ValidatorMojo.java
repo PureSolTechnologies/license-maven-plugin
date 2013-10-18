@@ -2,6 +2,7 @@ package com.puresol.maven.plugins.license;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -64,6 +65,9 @@ public class ValidatorMojo extends AbstractMojo {
 
 	@Parameter(alias = "validLicenses", required = true)
 	private Set<String> validLicenses;
+
+	@Parameter(alias = "approvedDependencies", required = true)
+	private Set<String> approvedDependencies;
 
 	@Parameter(alias = "failFast", required = false, defaultValue = "false")
 	private boolean failFast;
@@ -142,13 +146,19 @@ public class ValidatorMojo extends AbstractMojo {
 		boolean valid = true;
 		List<License> licenses = retrieveLicenses(artifact);
 		if (licenses.size() == 0) {
-			logArtifactResult(artifact, ValidationResult.INVALID,
-					"no license found");
-			if (failFast) {
-				throw new MojoFailureException(
-						"Invalid license(s) was/were found!");
+			if (isApprovedDependency(artifact)) {
+				logArtifactResult(artifact, ValidationResult.VALID,
+						"no license found, dependency is approved");
+				return true;
+			} else {
+				logArtifactResult(artifact, ValidationResult.INVALID,
+						"no license found and artifact is not approved");
+				if (failFast) {
+					throw new MojoFailureException(
+							"Invalid license(s) was/were found!");
+				}
+				valid = false;
 			}
-			valid = false;
 		}
 		for (License license : licenses) {
 			String licenseName = license.getName();
@@ -165,6 +175,19 @@ public class ValidatorMojo extends AbstractMojo {
 			}
 		}
 		return valid;
+	}
+
+	private boolean isApprovedDependency(Artifact artifact) {
+		String artifactIdentifier = getArtifactIdentifier(artifact);
+		for (String approvedDependency : approvedDependencies) {
+			if ((approvedDependency == null) || (approvedDependency.isEmpty())) {
+				continue;
+			}
+			if (Pattern.matches(approvedDependency, artifactIdentifier)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void logArtifactResult(Artifact artifact,
