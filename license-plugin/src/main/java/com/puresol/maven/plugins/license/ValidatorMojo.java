@@ -16,6 +16,7 @@ import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
@@ -43,7 +44,9 @@ requiresProject = true, //
 requiresReports = false, //
 requiresOnline = false, //
 inheritByDefault = true, //
-threadSafe = true//
+threadSafe = true,//
+requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,//
+requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME//
 )
 @Execute(//
 goal = "validate",//
@@ -90,6 +93,7 @@ public class ValidatorMojo extends AbstractMojo {
 		log = getLog();
 	}
 
+	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		Set<Artifact> artifacts = retrieveArtifacts();
 		boolean valid = validateArtifacts(artifacts);
@@ -116,6 +120,9 @@ public class ValidatorMojo extends AbstractMojo {
 			throws MojoExecutionException, MojoFailureException {
 		boolean valid = true;
 		for (Artifact artifact : artifacts) {
+			if (log.isDebugEnabled()) {
+				log.debug("Check " + getArtifactIdentifier(artifact) + ".");
+			}
 			if (!isArtifactValid(artifact)) {
 				valid = false;
 			}
@@ -125,24 +132,18 @@ public class ValidatorMojo extends AbstractMojo {
 
 	private boolean isArtifactValid(Artifact artifact)
 			throws MojoFailureException, MojoExecutionException {
-		if (log.isDebugEnabled()) {
-			log.debug("Checking artifact '" + getArtifactIdentifier(artifact)
-					+ "'...");
-		}
 		if (skipTestScope) {
 			if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
-				if (log.isDebugEnabled()) {
-					log.debug("Artifact is in '" + TEST_SCOPE_NAME
-							+ "' scope and this scope is valid per default.");
-				}
+				logArtifactResult(artifact, ValidationResult.VALID,
+						"test scope");
 				return true;
 			}
 		}
 		boolean valid = true;
 		List<License> licenses = retrieveLicenses(artifact);
-		String artifactName = getArtifactIdentifier(artifact);
 		if (licenses.size() == 0) {
-			log.error("No license for artifact " + artifactName + " found.");
+			logArtifactResult(artifact, ValidationResult.INVALID,
+					"no license found");
 			if (failFast) {
 				throw new MojoFailureException(
 						"Invalid license(s) was/were found!");
@@ -150,18 +151,43 @@ public class ValidatorMojo extends AbstractMojo {
 			valid = false;
 		}
 		for (License license : licenses) {
+			String licenseName = license.getName();
 			if (!isLicenseValid(license)) {
-				String licenseName = license.getName();
-				log.error("Invalid or unknown license '" + licenseName
-						+ "' for artifact " + artifactName + " found.");
+				logArtifactResult(artifact, ValidationResult.INVALID,
+						licenseName);
 				if (failFast) {
 					throw new MojoFailureException(
 							"Invalid license(s) was/were found!");
 				}
 				valid = false;
+			} else {
+				logArtifactResult(artifact, ValidationResult.VALID, licenseName);
 			}
 		}
 		return valid;
+	}
+
+	private void logArtifactResult(Artifact artifact,
+			ValidationResult validationResult, String version) {
+		switch (validationResult) {
+		case VALID:
+			log.info("License check for artifact '"
+					+ getArtifactIdentifier(artifact) + "': "
+					+ validationResult.name().toLowerCase() + " (" + version
+					+ ")");
+			break;
+		case INVALID:
+			log.error("License check for artifact '"
+					+ getArtifactIdentifier(artifact) + "': "
+					+ validationResult.name().toLowerCase() + " (" + version
+					+ ")");
+			break;
+		default:
+			log.error("License check for artifact '"
+					+ getArtifactIdentifier(artifact) + "': "
+					+ validationResult.name().toLowerCase() + " (" + version
+					+ ")");
+		}
 	}
 
 	private List<License> retrieveLicenses(Artifact artifact)
@@ -187,9 +213,6 @@ public class ValidatorMojo extends AbstractMojo {
 
 	private boolean isLicenseValid(License license) {
 		String licenseName = license.getName();
-		if (log.isDebugEnabled()) {
-			log.debug("Check license '" + licenseName + "'...");
-		}
 		if ((licenseName == null) || (licenseName.isEmpty())) {
 			return false;
 		}
