@@ -90,7 +90,6 @@ public class ValidatorMojo extends AbstractMojo {
 		log = getLog();
 	}
 
-	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		Set<Artifact> artifacts = retrieveArtifacts();
 		boolean valid = validateArtifacts(artifacts);

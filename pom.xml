@@ -2,22 +2,53 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<properties>
-		<commons.version>0.0.1-SNAPSHOT</commons.version>
-	</properties>
+	<prerequisites>
+		<maven>3.0</maven>
+	</prerequisites>
 
-	<parent>
-		<groupId>com.puresol.commons</groupId>
-		<artifactId>parent.java</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</parent>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<groupId>com.puresol.maven.plugins</groupId>
 	<artifactId>mojos</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>PureSol Technologies' Maven Plugins</name>
 
+	<name>PureSol Technologies' Maven Plugins</name>
+	<url>http://puresol-technologies.com</url>
+
+	<organization>
+		<name>PureSol Technologies</name>
+		<url>http://puresol-technologies.com</url>
+	</organization>
+
+	<inceptionYear>2013</inceptionYear>
+
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>http://ci</url>
+	</ciManagement>
+
+	<scm>
+		<url>http://git/gitweb/</url>
+	</scm>
+
+	<developers>
+		<developer>
+			<name>Rick-Rainer Ludwig</name>
+			<email>ludwig@puresol-technologies.com</email>
+			<organization>PureSol Technologies</organization>
+			<organizationUrl>http://puresol-technologies.com</organizationUrl>
+			<url>http://rick-rainer-ludwig.com</url>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>PureSol Technologies Commercial License</name>
+		</license>
+	</licenses>
 
 	<repositories>
 		<repository>
@@ -57,22 +88,6 @@
 
 	<dependencyManagement>
 		<dependencies>
-			<!-- Project internal -->
-
-			<!-- PureSol Technologies dependencies -->
-			<dependency>
-				<groupId>com.puresol.commons</groupId>
-				<artifactId>utils</artifactId>
-				<version>${commons.version}</version>
-			</dependency>
-			<!-- IMPORTS -->
-			<dependency>
-				<groupId>com.puresol.commons</groupId>
-				<artifactId>dependency.apache-commons</artifactId>
-				<version>${commons.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
 			<!-- Specific external libraries -->
 			<dependency>
 				<groupId>org.apache.maven</groupId>
@@ -92,12 +107,23 @@
 				<version>2.1</version>
 				<scope>provided</scope>
 			</dependency>
+			<!-- Testing -->
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.11</version>
+				<scope>test</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<build>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>2.5.1</version>
+				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-plugin-plugin</artifactId>
@@ -156,6 +182,16 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+		</plugins>
 	</build>
 
 	<modules>
