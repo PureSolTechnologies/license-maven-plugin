@@ -58,41 +58,14 @@
 		</license>
 	</licenses>
 
-	<repositories>
-		<repository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>central</id>
-			<name>libs-release</name>
-			<url>http://repo/libs-release</url>
-		</repository>
-		<repository>
-			<snapshots />
-			<id>snapshots</id>
-			<name>libs-snapshot</name>
-			<url>http://repo/libs-snapshot</url>
-		</repository>
-		<!-- repository> <id>JBoss</id> <name>JBoss</name> <url>https://repository.jboss.org/nexus/content/groups/public</url> 
-			</repository -->
-	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>central</id>
-			<name>plugins-release</name>
-			<url>http://repo/plugins-release</url>
-		</pluginRepository>
-		<pluginRepository>
-			<snapshots />
-			<id>snapshots</id>
-			<name>plugins-snapshot</name>
-			<url>http://repo/plugins-snapshot</url>
-		</pluginRepository>
-	</pluginRepositories>
+	<!-- repositories> <repository> <snapshots> <enabled>false</enabled> </snapshots> 
+		<id>central</id> <name>libs-release</name> <url>http://repo/libs-release</url> 
+		</repository> <repository> <snapshots /> <id>snapshots</id> <name>libs-snapshot</name> 
+		<url>http://repo/libs-snapshot</url> </repository> </repositories> <pluginRepositories> 
+		<pluginRepository> <snapshots> <enabled>false</enabled> </snapshots> <id>central</id> 
+		<name>plugins-release</name> <url>http://repo/plugins-release</url> </pluginRepository> 
+		<pluginRepository> <snapshots /> <id>snapshots</id> <name>plugins-snapshot</name> 
+		<url>http://repo/plugins-snapshot</url> </pluginRepository> </pluginRepositories -->
 
 	<dependencyManagement>
 		<dependencies>
@@ -141,6 +114,11 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-plugin-plugin</artifactId>
 					<version>3.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.jvnet.jaxb2.maven2</groupId>
+					<artifactId>maven-jaxb2-plugin</artifactId>
+					<version>0.8.3</version>
 				</plugin>
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
