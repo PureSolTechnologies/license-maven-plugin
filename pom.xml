@@ -58,14 +58,38 @@
 		</license>
 	</licenses>
 
-	<!-- repositories> <repository> <snapshots> <enabled>false</enabled> </snapshots> 
-		<id>central</id> <name>libs-release</name> <url>http://repo/libs-release</url> 
-		</repository> <repository> <snapshots /> <id>snapshots</id> <name>libs-snapshot</name> 
-		<url>http://repo/libs-snapshot</url> </repository> </repositories> <pluginRepositories> 
-		<pluginRepository> <snapshots> <enabled>false</enabled> </snapshots> <id>central</id> 
-		<name>plugins-release</name> <url>http://repo/plugins-release</url> </pluginRepository> 
-		<pluginRepository> <snapshots /> <id>snapshots</id> <name>plugins-snapshot</name> 
-		<url>http://repo/plugins-snapshot</url> </pluginRepository> </pluginRepositories -->
+	<repositories>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>libs-release</name>
+			<url>http://repo/libs-release</url>
+		</repository>
+		<repository>
+			<snapshots />
+			<id>snapshots</id>
+			<name>libs-snapshot</name>
+			<url>http://repo/libs-snapshot</url>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>plugins-release</name>
+			<url>http://repo/plugins-release</url>
+		</pluginRepository>
+		<pluginRepository>
+			<snapshots />
+			<id>snapshots</id>
+			<name>plugins-snapshot</name>
+			<url>http://repo/plugins-snapshot</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<dependencyManagement>
 		<dependencies>
