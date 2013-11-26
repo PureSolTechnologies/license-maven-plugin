@@ -37,7 +37,8 @@
 	</ciManagement>
 
 	<scm>
-		<connection>https://github.com/RickRainerLudwig/maven-license-plugin</connection>
+		<developerConnection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</developerConnection>
+		<connection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</connection>
 		<url>https://github.com/RickRainerLudwig/maven-license-plugin.git</url>
 		<tag>master</tag>
 	</scm>
@@ -143,6 +144,11 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.4.2</version>
 			</plugin>
 		</plugins>
 	</build>
