@@ -24,7 +24,8 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
 /**
- * This class implements the conversion into Eclipse Help files.
+ * This class is a Maven Mojo to check the validity of licenses specified in the
+ * dependencies of a maven module.
  * 
  * Used to configure injection of Plexus components by
  * MavenPluginManager.getConfiguredMojo(...) and special Maven objects as well:
@@ -36,7 +37,6 @@ import org.apache.maven.settings.Settings;
  * org.apache.maven.plugin.descriptor.PluginDescriptor
  * 
  * @author Rick-Rainer Ludwig
- * 
  */
 @Mojo(//
 name = "validate", //
@@ -57,24 +57,49 @@ public class ValidatorMojo extends AbstractMojo {
 
 	private static final String TEST_SCOPE_NAME = "test";
 
+	/**
+	 * This field contains the remote artifact repositories.
+	 */
 	@Parameter(required = false, defaultValue = "${project.remoteArtifactRepositories}", readonly = true)
 	private List<ArtifactRepository> remoteArtifactRepositories;
 
+	/**
+	 * This field contains the local repository.
+	 */
 	@Parameter(required = false, defaultValue = "${localRepository}", readonly = true)
 	private ArtifactRepository localRepository;
 
+	/**
+	 * This list contains the list of valid license names.
+	 */
 	@Parameter(alias = "validLicenses", required = true)
 	private Set<String> validLicenses;
 
+	/**
+	 * This list contains the regexp string for approved artifacts.
+	 */
 	@Parameter(alias = "approvedDependencies", required = true)
 	private Set<String> approvedDependencies;
 
+	/**
+	 * This parameter contains whether this Mojo shall fail fast (with first
+	 * occurrence of an invalid license) or should do all the work first before
+	 * failing. Default value is false.
+	 */
 	@Parameter(alias = "failFast", required = false, defaultValue = "false")
 	private boolean failFast;
 
+	/**
+	 * This parameter contains whether or not the dependency should be checked
+	 * recursively or not. Default is true.
+	 */
 	@Parameter(alias = "recursive", required = false, defaultValue = "true")
 	private boolean recursive;
 
+	/**
+	 * Specifies whether or not the dependencies in test scope should be
+	 * skipped. Default is false.
+	 */
 	@Parameter(alias = "skipTestScope", required = false, defaultValue = "false")
 	private boolean skipTestScope;
 
@@ -100,12 +125,15 @@ public class ValidatorMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		Set<Artifact> artifacts = retrieveArtifacts();
-		boolean valid = validateArtifacts(artifacts);
-		if (!valid) {
-			throw new MojoFailureException("Invalid license(s) was/were found!");
-		}
+		validateArtifacts(artifacts);
 	}
 
+	/**
+	 * This method retrievs all artifacts of the current Maven module.
+	 * 
+	 * @return A {@link Set} of {@link Artifact} is returned containing the
+	 *         artifacts found.
+	 */
 	private Set<Artifact> retrieveArtifacts() {
 		Set<Artifact> artifacts;
 		if (recursive) {
@@ -120,7 +148,18 @@ public class ValidatorMojo extends AbstractMojo {
 		return artifacts;
 	}
 
-	private boolean validateArtifacts(Set<Artifact> artifacts)
+	/**
+	 * This method checks a set of artifacts for validity.
+	 * 
+	 * @param artifacts
+	 *            is a {@link Set} of {@link Artifact} which is to be checked
+	 *            for validity.
+	 * @throws MojoExecutionException
+	 *             is throw if the execution was faulty.
+	 * @throws MojoFailureException
+	 *             is thrown if an invalid license is found.
+	 */
+	private void validateArtifacts(Set<Artifact> artifacts)
 			throws MojoExecutionException, MojoFailureException {
 		boolean valid = true;
 		for (Artifact artifact : artifacts) {
@@ -131,9 +170,25 @@ public class ValidatorMojo extends AbstractMojo {
 				valid = false;
 			}
 		}
-		return valid;
+		if (!valid) {
+			throw new MojoFailureException("Invalid license(s) was/were found!");
+		}
 	}
 
+	/**
+	 * This method checks the validity of a single artifact.
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} to be checked for validity.
+	 * @return <code>true</code> is returned if the license is valid.
+	 *         <code>false</code> is returned otherwise.
+	 * @throws MojoFailureException
+	 *             is thrown if {@link #failFast} is set to <code>true</code>
+	 *             and the license is invalid to enforce the fail fast behavior
+	 *             requested.
+	 * @throws MojoExecutionException
+	 *             is thrown in case of a faulty Maven run.
+	 */
 	private boolean isArtifactValid(Artifact artifact)
 			throws MojoFailureException, MojoExecutionException {
 		if (skipTestScope) {
@@ -177,6 +232,16 @@ public class ValidatorMojo extends AbstractMojo {
 		return valid;
 	}
 
+	/**
+	 * This method checks whether or not an artifact is already approved. For
+	 * that the {@link #approvedDependencies} list is checked for a pattern
+	 * matching the artifact provided as parameter to this method.
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} to be checked for approval.
+	 * @return <code>true</code> is returned if the artifact is already
+	 *         approved. <code>false</code> is returned otherwise.
+	 */
 	private boolean isApprovedDependency(Artifact artifact) {
 		String artifactIdentifier = getArtifactIdentifier(artifact);
 		for (String approvedDependency : approvedDependencies) {
@@ -190,29 +255,50 @@ public class ValidatorMojo extends AbstractMojo {
 		return false;
 	}
 
+	/**
+	 * This method is used to log results with Maven log {@link Log}.
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} which was checked for validity.
+	 * @param validationResult
+	 *            is the {@link ValidationResult} of the check.
+	 * @param licenseOrApprovalMessage
+	 *            is the message to be printed containing the license or the
+	 *            appoval message.
+	 */
 	private void logArtifactResult(Artifact artifact,
-			ValidationResult validationResult, String version) {
+			ValidationResult validationResult, String licenseOrApprovalMessage) {
 		switch (validationResult) {
 		case VALID:
 			log.info("License check for artifact '"
 					+ getArtifactIdentifier(artifact) + "': "
-					+ validationResult.name().toLowerCase() + " (" + version
-					+ ")");
+					+ validationResult.name().toLowerCase() + " ("
+					+ licenseOrApprovalMessage + ")");
 			break;
 		case INVALID:
 			log.error("License check for artifact '"
 					+ getArtifactIdentifier(artifact) + "': "
-					+ validationResult.name().toLowerCase() + " (" + version
-					+ ")");
+					+ validationResult.name().toLowerCase() + " ("
+					+ licenseOrApprovalMessage + ")");
 			break;
 		default:
 			log.error("License check for artifact '"
 					+ getArtifactIdentifier(artifact) + "': "
-					+ validationResult.name().toLowerCase() + " (" + version
-					+ ")");
+					+ validationResult.name().toLowerCase() + " ("
+					+ licenseOrApprovalMessage + ")");
 		}
 	}
 
+	/**
+	 * This method returns the license of an artifact.
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} where the license is to be read from.
+	 * @return A {@link List} of {@link License} is returned containing the
+	 *         licenses specified in the artifact.
+	 * @throws MojoExecutionException
+	 *             is throws if the Maven run is faulty.
+	 */
 	private List<License> retrieveLicenses(Artifact artifact)
 			throws MojoExecutionException {
 		try {
@@ -226,6 +312,18 @@ public class ValidatorMojo extends AbstractMojo {
 		}
 	}
 
+	/**
+	 * This method returns the artifact identifier. The identifier returned here
+	 * is a single string containing the artifactId, groupId and version
+	 * separated by colons:
+	 * 
+	 * ${artifactId}:${groupId}:${version}
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} of which the identifier is to be
+	 *            built.
+	 * @return A {@link String} is returned containing the identifier.
+	 */
 	private String getArtifactIdentifier(Artifact artifact) {
 		String groupId = artifact.getGroupId();
 		String artifactId = artifact.getArtifactId();
@@ -234,6 +332,14 @@ public class ValidatorMojo extends AbstractMojo {
 		return artifactName;
 	}
 
+	/**
+	 * This method checks the validity of a single license.
+	 * 
+	 * @param license
+	 *            is the {@link License} to be checked.
+	 * @return <code>true</code> is returned if the license is valid.
+	 *         <code>false</code> is returned otherwise.
+	 */
 	private boolean isLicenseValid(License license) {
 		String licenseName = license.getName();
 		if ((licenseName == null) || (licenseName.isEmpty())) {
