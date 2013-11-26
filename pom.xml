@@ -54,10 +54,10 @@
 
 	<licenses>
 		<license>
-			<name>PureSol Technologies Commercial License</name>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
 		</license>
 	</licenses>
-
 
 	<dependencies>
 		<!-- Specific external libraries -->
