@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<prerequisites>
@@ -12,7 +11,7 @@
 
 	<groupId>com.puresol.maven.plugins</groupId>
 	<artifactId>license-plugin</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>PureSol Technologies' Maven License Plugin</name>
@@ -40,7 +39,7 @@
 		<developerConnection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</developerConnection>
 		<connection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</connection>
 		<url>https://github.com/RickRainerLudwig/maven-license-plugin.git</url>
-		<tag>master</tag>
+		<tag>license-plugin-1.0.0</tag>
 	</scm>
 
 	<developers>
