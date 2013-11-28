@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<prerequisites>
@@ -9,37 +10,39 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+
 	<groupId>com.puresoltechnologies.maven.plugins</groupId>
 	<artifactId>maven-license-plugin</artifactId>
 	<version>1.1.0-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>PureSol Technologies' Maven License Plugin</name>
-	<inceptionYear>2013</inceptionYear>
-	<url>http://puresol-technologies.com</url>
-
 	<description>This is a simple license checker plugin for Maven.</description>
+	<inceptionYear>2013</inceptionYear>
+	<url>https://github.com/RickRainerLudwig/maven-license-plugin</url>
 
 	<organization>
 		<name>PureSol Technologies</name>
 		<url>http://puresol-technologies.com</url>
 	</organization>
 
-	<issueManagement>
-		<system>GitHub</system>
-		<url>https://github.com/RickRainerLudwig/maven-license-plugin/issues</url>
-	</issueManagement>
-
-	<ciManagement>
-		<system>Jenkins</system>
-		<url>https://travis-ci.org/profile/RickRainerLudwig</url>
-	</ciManagement>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 	<scm>
 		<developerConnection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</developerConnection>
 		<connection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</connection>
 		<url>https://github.com/RickRainerLudwig/maven-license-plugin.git</url>
-		<tag>license-plugin-1.0.0</tag>
 	</scm>
 
 	<developers>
@@ -52,12 +55,18 @@
 		</developer>
 	</developers>
 
-	<licenses>
-		<license>
-			<name>Apache License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-		</license>
-	</licenses>
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/RickRainerLudwig/maven-license-plugin/issues</url>
+	</issueManagement>
+
+	<ciManagement>
+		<system>Jenkins</system>
+		<url>https://travis-ci.org/profile/RickRainerLudwig</url>
+	</ciManagement>
+
+	<repositories></repositories>
+	<pluginRepositories></pluginRepositories>
 
 	<dependencies>
 		<!-- Specific external libraries -->
