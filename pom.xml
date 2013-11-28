@@ -17,7 +17,7 @@
 
 	<groupId>com.puresoltechnologies.maven.plugins</groupId>
 	<artifactId>license-maven-plugin</artifactId>
-	<version>1.1.0</version>
+	<version>1.2.0-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>PureSol Technologies' Maven License Plugin</name>
@@ -42,7 +42,7 @@
 		<developerConnection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</developerConnection>
 		<connection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</connection>
 		<url>https://github.com/RickRainerLudwig/maven-license-plugin.git</url>
-	  <tag>v1.1.0</tag>
+	  <tag>HEAD</tag>
   </scm>
 
 	<developers>
