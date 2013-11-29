@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<prerequisites>
@@ -23,7 +24,7 @@
 	<name>PureSol Technologies' Maven License Plugin</name>
 	<description>This is a simple license checker plugin for Maven.</description>
 	<inceptionYear>2013</inceptionYear>
-	<url>https://github.com/RickRainerLudwig/maven-license-plugin</url>
+	<url>http://oss.puresol-technologies.com/license-maven-plugin</url>
 
 	<organization>
 		<name>PureSol Technologies</name>
@@ -42,8 +43,8 @@
 		<developerConnection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</developerConnection>
 		<connection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</connection>
 		<url>https://github.com/RickRainerLudwig/maven-license-plugin.git</url>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<developers>
 		<developer>
@@ -62,8 +63,16 @@
 
 	<ciManagement>
 		<system>Jenkins</system>
-		<url>https://travis-ci.org/profile/RickRainerLudwig</url>
+		<url>https://travis-ci.org/RickRainerLudwig/license-maven-plugin</url>
 	</ciManagement>
+
+	<distributionManagement>
+		<site>
+			<id>AllInkl</id>
+			<name>All-Inkl</name>
+			<url>ftp://puresol-technologies.com/test/license-maven-plugin</url>
+		</site>
+	</distributionManagement>
 
 	<repositories />
 	<pluginRepositories />
@@ -156,9 +165,19 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>2.4.2</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<version>3.3</version>
 			</plugin>
 		</plugins>
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ftp</artifactId>
+				<version>2.5</version>
+			</extension>
+		</extensions>
 	</build>
-
 </project>
