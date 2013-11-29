@@ -1,0 +1,44 @@
+/* PureSol Technologies corporate design */
+
+html {
+	font-family: serif;
+	font-size: 12pt;
+}
+
+body {
+	border-width: 1pt;
+	border-color: black;
+	border-style: solid;
+}
+
+h1 {
+	font-size: 24pt;
+	color: #00b000;
+	border-top-width: 1pt;
+	border-top-color: #00b000;
+	border-top-style: solid;
+	border-bottom-width: 1pt;
+	border-bottom-color: #00b000;
+	border-bottom-style: solid;
+}
+
+h2 {
+	font-size: 18pt;
+	color: #008000;
+	border-bottom-width: 1pt;
+	border-bottom-color: #008000;
+	border-bottom-style: solid;
+}
+
+h3 {
+	font-size: 15pt;
+	color: #005000;
+	border-bottom-width: 1pt;
+	border-bottom-color: #005000;
+	border-bottom-style: solid;
+}
+
+h4,h5,h6 {
+	font-size: 12pt;
+	color: black;
+}

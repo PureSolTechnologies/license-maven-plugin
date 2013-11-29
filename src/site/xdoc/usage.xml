@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+	<properties>
+		<title>Usage</title>
+		<author email="ludwig@puresol-technologies.com">Rick-Rainer Ludwig</author>
+	</properties>
+
+	<!-- Optional HEAD element, which is copied as is into the XHTML <head> 
+		element -->
+	<!-- head> <meta . /> </head -->
+
+	<body>
+		<section name="Usage">
+			<p>
+				Sample plug-in configuration:
+			</p>
+			<source>
+				&lt;plugins&gt;<br />
+				    &lt;plugin&gt;<br />
+				        &lt;groupId&gt;com.puresol.maven.plugins&lt;/groupId&gt;<br />
+				        &lt;artifactId&gt;license-plugin&lt;/artifactId&gt;<br />
+				        &lt;version&gt;1.0.0&lt;/version&gt;<br />
+				        &lt;configuration&gt;<br />
+				            &lt;recursive&gt;true&lt;/recursive&gt;<br />
+				            &lt;validLicenses&gt;<br />
+				                &lt;validLicense&gt;PureSol Technologies Commercial License&lt;/validLicense&gt;<br />
+				                &lt;!-- Apache License --&gt;<br />
+				                &lt;validLicense&gt;Apache License, Version 2.0&lt;/validLicense&gt;<br />
+				                &lt;validLicense&gt;The Apache Software License, Version 2.0&lt;/validLicense&gt;<br />
+				                &lt;!-- MIT License --&gt;<br />
+				                &lt;validLicense&gt;MIT License&lt;/validLicense&gt;<br />
+				                &lt;validLicense&gt;The MIT License&lt;/validLicense&gt;<br />
+				            &lt;/validLicenses&gt;<br />
+				            &lt;approvedDependencies&gt;<br />
+				                &lt;approvedDependency&gt;p2.eclipse-plugin:.*:.*&lt;/approvedDependency&gt;<br />
+				                &lt;approvedDependency&gt;p2.eclipse-feature:.*:.*&lt;/approvedDependency&gt;<br />
+				            &lt;/approvedDependencies&gt;<br />
+				        &lt;/configuration&gt;<br />
+				    &lt;/plugin&gt;<br />
+				&lt;/plugins&gt;<br />
+			</source>
+			<p>
+				Explanation for the different settings:
+			</p>
+			<table>
+				<caption>Parameters for Configuration</caption>
+				<thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+				<tr>
+					<td>
+						<![CDATA[<recursive>]]>
+					</td>
+					<td>
+						(true/false)
+					</td>
+					<td>
+						Define whether or not the dependencies are checked recursively.
+						That
+						means, not only the dependencies are checked, but also their
+						dependencies.
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<![CDATA[<validLicenses>]]>
+					</td>
+					<td>
+						(List)
+					</td>
+					<td>
+						Define with
+						<![CDATA[<validLicense>]]>
+						the names of licenses which are valid to be
+						used in
+						the project.
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<![CDATA[<approvedDependencies>]]>
+					</td>
+					<td>
+						(List)
+					</td>
+					<td>
+						Define with
+						<![CDATA[<approvedDependency>]]>
+						which artifacts were checked manually
+						(for
+						example on webpage) to
+						have a valid license. This is used for
+						dependencies which do not
+						have a license information set in
+						their
+						pom.xml.
+						The string for
+						specification has three parts separated by
+						colon.
+						These
+						parts contain
+						regular expressions for artifactId,
+						groupId and
+						version.
+					</td>
+				</tr>
+			</table>
+		</section>
+	</body>
+</document>                                              

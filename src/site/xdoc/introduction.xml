@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+	<properties>
+		<title>Introduction</title>
+		<author email="ludwig@puresol-technologies.com">Rick-Rainer Ludwig</author>
+	</properties>
+
+	<!-- Optional HEAD element, which is copied as is into the XHTML <head> 
+		element -->
+	<!-- head> <meta . /> </head -->
+
+	<body>
+		<section name="Introduction">
+			<p>
+				This is a Maven plugin which checks the license settings in all
+				dependencies
+				defined in the module for a known and valid license
+				name. As soon as a
+				license
+				is unknown, this Maven module fails.
+			</p>
+			<p>
+				This plugin is used to enforce license checks and approval. This
+				is
+				especially
+				useful for open source projects which need to check
+				their dependencies not
+				to
+				contain proprietary licenses.
+			</p>
+		</section>
+	</body>
+</document>
