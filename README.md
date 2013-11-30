@@ -1,5 +1,5 @@
 =====================================================================
-  maven-license-plugin (PureSol Technologies' Maven License Plugin)
+  license-maven-plugin (PureSol Technologies' License Maven Plugin)
 =====================================================================
 
 This is a Maven plugin which checks the license settings in all dependencies
@@ -10,6 +10,7 @@ This plugin is used to enforce license checks and approval. This is especially
 useful for open source projects which need to check their dependencies not to
 contain proprietary licenses. 
 
-For usage information have a look to the maven-license-plugin website at
+For usage information have a look to the license-maven-plugin website at
 
-    http://oss.puresol-technologies.com/license-maven-plugin/usage.html                                                     
+    http://oss.puresol-technologies.com/license-maven-plugin/usage.html
+                                                     
