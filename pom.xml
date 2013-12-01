@@ -40,9 +40,9 @@
 	</licenses>
 
 	<scm>
-		<developerConnection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</developerConnection>
-		<connection>scm:git:https://github.com/RickRainerLudwig/maven-license-plugin</connection>
-		<url>https://github.com/RickRainerLudwig/maven-license-plugin.git</url>
+		<developerConnection>scm:git:https://github.com/RickRainerLudwig/license-maven-plugin</developerConnection>
+		<connection>scm:git:https://github.com/RickRainerLudwig/license-maven-plugin</connection>
+		<url>https://github.com/RickRainerLudwig/license-maven-plugin.git</url>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -58,7 +58,7 @@
 
 	<issueManagement>
 		<system>GitHub</system>
-		<url>https://github.com/RickRainerLudwig/maven-license-plugin/issues</url>
+		<url>https://github.com/RickRainerLudwig/license-maven-plugin/issues</url>
 	</issueManagement>
 
 	<ciManagement>
