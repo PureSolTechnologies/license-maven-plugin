@@ -57,8 +57,8 @@
 	</developers>
 
 	<issueManagement>
-		<system>GitHub</system>
-		<url>https://github.com/RickRainerLudwig/license-maven-plugin/issues</url>
+		<system>Redmine</system>
+		<url>https://bugs.puresol-technologies.net/projects/license-maven-plugin</url>
 	</issueManagement>
 
 	<ciManagement>
