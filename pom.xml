@@ -68,8 +68,8 @@
 
 	<distributionManagement>
 		<site>
-			<id>AllInkl</id>
-			<name>All-Inkl</name>
+			<id>FTPPureSolTechnologiesCom</id>
+			<name>FTPPureSolTechnologiesCom</name>
 			<url>ftp://puresol-technologies.com/test/license-maven-plugin</url>
 		</site>
 	</distributionManagement>
