@@ -69,7 +69,7 @@
 		<site>
 			<id>FTPPureSolTechnologiesCom</id>
 			<name>FTPPureSolTechnologiesCom</name>
-			<url>ftp://puresol-technologies.com/test/license-maven-plugin</url>
+			<url>ftp://puresol-technologies.com/oss/license-maven-plugin</url>
 		</site>
 	</distributionManagement>
 
