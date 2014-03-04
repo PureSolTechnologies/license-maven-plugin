@@ -38,6 +38,10 @@ import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
+import com.puresoltechnologies.maven.plugins.license.parameter.ApprovedDependency;
+import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
+import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
+
 /**
  * This class is a Maven Mojo to check the validity of licenses specified in the
  * dependencies of a maven module.

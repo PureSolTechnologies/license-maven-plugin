@@ -1,4 +1,6 @@
-package com.puresoltechnologies.maven.plugins.license;
+package com.puresoltechnologies.maven.plugins.license.parameter;
+
+import java.net.URL;
 
 /**
  * This class contains a single known license. This license knowledge is used to
@@ -22,7 +24,7 @@ public class KnownLicense {
 	/**
 	 * This field contains a URL to the full license text.
 	 */
-	private String url;
+	private URL url;
 
 	/**
 	 * This is the default constructor.
@@ -73,7 +75,7 @@ public class KnownLicense {
 	 * 
 	 * @return The {@link #url} is returned.
 	 */
-	public String getUrl() {
+	public URL getUrl() {
 		return url;
 	}
 
@@ -83,7 +85,7 @@ public class KnownLicense {
 	 * @param url
 	 *            is the URL to be set to {@link #url}.
 	 */
-	public void setUrl(String url) {
+	public void setUrl(URL url) {
 		this.url = url;
 	}
 

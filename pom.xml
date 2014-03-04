@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<prerequisites>
@@ -7,6 +8,10 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<mavenVersion>3.0</mavenVersion>
+		<doxiaVersion>1.0</doxiaVersion>
+		<doxia-sitetoolsVersion>1.0</doxia-sitetoolsVersion>
+		<mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>
 	</properties>
 
 	<parent>
@@ -81,26 +86,50 @@
 		<dependency>
 			<groupId>org.apache.maven</groupId>
 			<artifactId>maven-plugin-api</artifactId>
-			<version>3.1.0</version>
+			<version>${mavenVersion}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.maven.plugin-tools</groupId>
 			<artifactId>maven-plugin-annotations</artifactId>
-			<version>3.2</version>
+			<version>${mavenPluginPluginVersion}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.maven</groupId>
+			<groupId>org.apache.maven.plugin-tools</groupId>
 			<artifactId>maven-plugin-tools-api</artifactId>
-			<version>2.1</version>
+			<version>${mavenPluginPluginVersion}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.maven.reporting</groupId>
+			<artifactId>maven-reporting-api</artifactId>
+			<version>3.0</version>
+		</dependency>
+		<!-- Doxia -->
+		<dependency>
+			<groupId>org.apache.maven.doxia</groupId>
+			<artifactId>doxia-sink-api</artifactId>
+			<version>${doxiaVersion}</version>
+		</dependency>
+
+		<!-- Doxia-sitetools -->
+		<dependency>
+			<groupId>org.apache.maven.doxia</groupId>
+			<artifactId>doxia-site-renderer</artifactId>
+			<version>${doxia-sitetoolsVersion}</version>
 		</dependency>
 		<!-- Testing -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.maven.shared</groupId>
+			<artifactId>maven-plugin-testing-harness</artifactId>
+			<version>1.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -119,7 +148,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-plugin-plugin</artifactId>
-				<version>3.0</version>
+				<version>${mavenPluginPluginVersion}</version>
 				<configuration>
 					<skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
 				</configuration>
@@ -192,6 +221,7 @@
 			</extension>
 		</extensions>
 	</build>
+
 	<reporting>
 		<plugins>
 			<plugin>
@@ -207,7 +237,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-plugin-plugin</artifactId>
-				<version>3.0</version>
+				<version>${mavenPluginPluginVersion}</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -221,4 +251,5 @@
 			</plugin>
 		</plugins>
 	</reporting>
+
 </project>

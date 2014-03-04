@@ -1,17 +1,17 @@
-package com.puresoltechnologies.maven.plugins.license;
+package com.puresoltechnologies.maven.plugins.license.parameter;
+
 
 /**
- * This class contains a single valid license.
+ * This class contains a single approved dependency.
  * 
  * @author Rick-Rainer Ludwig
  */
-public class ValidLicense {
+public class ApprovedDependency {
 
 	/**
-	 * This field contains the name of the license how it is set in the
-	 * &lt;license&gt; tag in Maven's pom.xml.
+	 * This field contains the pattern of the dependency.
 	 */
-	private String name;
+	private String identifier;
 	/**
 	 * This field contains the unique key of the license. This key needs to be
 	 * set with {@link KnownLicense#setKey(String)}
@@ -21,26 +21,26 @@ public class ValidLicense {
 	/**
 	 * This is the default constructor.
 	 */
-	public ValidLicense() {
+	public ApprovedDependency() {
 	}
 
 	/**
 	 * This method sets the license's name.
 	 * 
-	 * @param name
-	 *            is set to {@link #name}.
+	 * @param identifier
+	 *            is set to {@link #identifier}.
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
 	}
 
 	/**
 	 * This method returns the license name.
 	 * 
-	 * @return Returns {@link #name} as {@link String}.
+	 * @return Returns {@link #identifier} as {@link String}.
 	 */
-	public String getName() {
-		return name;
+	public String getIdentifier() {
+		return identifier;
 	}
 
 	/**
