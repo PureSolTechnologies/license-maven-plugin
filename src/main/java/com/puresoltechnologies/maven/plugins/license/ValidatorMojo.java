@@ -15,6 +15,11 @@
  */
 package com.puresoltechnologies.maven.plugins.license;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -38,9 +43,11 @@ import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
+import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 import com.puresoltechnologies.maven.plugins.license.parameter.ApprovedDependency;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
 import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
+import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 
 /**
  * This class is a Maven Mojo to check the validity of licenses specified in the
@@ -103,6 +110,9 @@ public class ValidatorMojo extends AbstractMojo {
 	@Parameter(alias = "approvedDependencies", required = true)
 	private Set<ApprovedDependency> approvedDependencies;
 
+	@Parameter(alias = "outputDirectory", required = false, defaultValue = "${project.build.directory}/licenses")
+	private File outputDirectory;
+
 	/**
 	 * This parameter contains whether this Mojo shall fail fast (with first
 	 * occurrence of an invalid license) or should do all the work first before
@@ -139,6 +149,7 @@ public class ValidatorMojo extends AbstractMojo {
 	private MavenProjectBuilder projectBuilder;
 
 	private final Log log;
+	private OutputStreamWriter writer;
 
 	public ValidatorMojo() {
 		log = getLog();
@@ -147,6 +158,18 @@ public class ValidatorMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		Set<Artifact> artifacts = retrieveArtifacts();
+		log.debug("Artifact which are going to be checked:");
+		for (Artifact artifact : artifacts) {
+			String groupId = artifact.getGroupId();
+			String artifactId = artifact.getArtifactId();
+			String version = artifact.getVersion();
+			String classifier = artifact.getClassifier();
+			String type = artifact.getType();
+			String scope = artifact.getScope();
+			log.debug("  * " + groupId + ":" + groupId + ":" + artifactId + ":"
+					+ version + ":" + classifier + ":" + type + " (" + scope
+					+ ")");
+		}
 		validateArtifacts(artifacts);
 	}
 
@@ -158,10 +181,12 @@ public class ValidatorMojo extends AbstractMojo {
 	 */
 	private Set<Artifact> retrieveArtifacts() {
 		if (recursive) {
+			log.info("Recursive license validation is enabled. All direct and transitive dependency artifacts are going to be checked.");
 			@SuppressWarnings("unchecked")
 			Set<Artifact> set = project.getArtifacts();
 			return set;
 		} else {
+			log.info("Recursive license validation is disabled. All only direct dependency artifacts are going to be checked.");
 			@SuppressWarnings("unchecked")
 			Set<Artifact> set = project.getDependencyArtifacts();
 			return set;
@@ -182,13 +207,33 @@ public class ValidatorMojo extends AbstractMojo {
 	private void validateArtifacts(Set<Artifact> artifacts)
 			throws MojoExecutionException, MojoFailureException {
 		boolean valid = true;
-		for (Artifact artifact : artifacts) {
-			if (log.isDebugEnabled()) {
-				log.debug("Check " + getArtifactIdentifier(artifact) + ".");
+		File licenseResultsFile = IOUtilities.createNewResultsFile(log,
+				outputDirectory);
+		try (FileOutputStream outputStream = new FileOutputStream(
+				licenseResultsFile)) {
+			writer = new OutputStreamWriter(outputStream,
+					Charset.defaultCharset());
+			try {
+				for (Artifact artifact : artifacts) {
+					if (!isArtifactValid(artifact)) {
+						if (failFast) {
+							throw new MojoFailureException(
+									"Invalid license(s) was/were found!");
+						}
+						valid = false;
+					}
+				}
+			} finally {
+				try {
+					writer.close();
+				} finally {
+					writer = null;
+				}
 			}
-			if (!isArtifactValid(artifact)) {
-				valid = false;
-			}
+		} catch (IOException e) {
+			throw new MojoExecutionException(
+					"Could not write validation result to '"
+							+ licenseResultsFile + "'.", e);
 		}
 		if (!valid) {
 			throw new MojoFailureException("Invalid license(s) was/were found!");
@@ -211,55 +256,79 @@ public class ValidatorMojo extends AbstractMojo {
 	 */
 	private boolean isArtifactValid(Artifact artifact)
 			throws MojoFailureException, MojoExecutionException {
-		if (skipTestScope) {
-			if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
-				logArtifactResult(artifact, ValidationResult.VALID,
-						"test scope");
-				return true;
-			}
-		}
+		log.debug("Check " + getArtifactIdentifier(artifact) + ".");
 		List<License> licenses = retrieveLicenses(artifact);
-		boolean valid = true;
 		if (licenses.size() == 0) {
 			if (isApprovedDependency(artifact)) {
-				String licenseName = findName(artifact);
+				KnownLicense knownLicense = findKnownLicense(artifact);
 				logArtifactResult(artifact, ValidationResult.VALID,
 						"no license found, but dependency is approved with license "
-								+ licenseName);
+								+ knownLicense.getName(),
+						knownLicense.getName(), knownLicense.getUrl()
+								.toString());
 				return true;
 			} else {
-				logArtifactResult(artifact, ValidationResult.INVALID,
-						"no license found and artifact is not approved");
-				if (failFast) {
-					throw new MojoFailureException(
-							"Invalid license(s) was/were found!");
+				if (skipTestScope) {
+					if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
+						logArtifactResult(artifact, ValidationResult.VALID,
+								"test scope", "", "");
+						return true;
+					}
+				} else {
+					logArtifactResult(artifact, ValidationResult.INVALID,
+							"no license found and artifact is not approved",
+							"", "");
+					return false;
 				}
-				valid = false;
 			}
 		}
+		boolean valid = true;
 		for (License license : licenses) {
-			String licenseName = findName(license);
 			if (!isValidLicense(license)) {
-				logArtifactResult(artifact, ValidationResult.INVALID,
-						licenseName);
-				if (failFast) {
-					throw new MojoFailureException(
-							"Invalid license(s) was/were found!");
+				if (skipTestScope) {
+					if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
+						logArtifactResult(artifact, ValidationResult.VALID,
+								"test scope", license.getName(), "");
+					}
+				} else {
+					logArtifactResult(artifact, ValidationResult.INVALID,
+							license.getName(), license.getName(), "");
+					valid = false;
 				}
-				valid = false;
 			} else {
-				logArtifactResult(artifact, ValidationResult.VALID, licenseName);
+				KnownLicense knownLicense = findKnowLicense(license);
+				logArtifactResult(artifact, ValidationResult.VALID,
+						knownLicense.getName(), knownLicense.getName(),
+						knownLicense.getUrl().toString());
 			}
 		}
 		return valid;
 	}
 
-	private String findName(Artifact artifact) throws MojoFailureException {
+	/**
+	 * Finds a known license for the given {@link Artifact}.
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} for which the known license is to be
+	 *            looked up.
+	 * @return A {@link KnownLicense} is returned.
+	 * @throws MojoFailureException
+	 */
+	private KnownLicense findKnownLicense(Artifact artifact)
+			throws MojoFailureException {
 		String licenseKey = findLicenseKey(artifact);
-		KnownLicense knownLicense = findKnownLicense(licenseKey);
-		return knownLicense == null ? null : knownLicense.getName();
+		return findKnownLicense(licenseKey);
 	}
 
+	/**
+	 * Finds the license key for the given {@link Artifact}.
+	 * 
+	 * @param artifact
+	 *            is the {@link Artifact} for which the license key is to be
+	 *            found.
+	 * @return A {@link String} containing the key is returned.
+	 * @throws MojoFailureException
+	 */
 	private String findLicenseKey(Artifact artifact)
 			throws MojoFailureException {
 		ApprovedDependency approvedDependency = findApprovedDependency(artifact);
@@ -271,15 +340,15 @@ public class ValidatorMojo extends AbstractMojo {
 	 * 
 	 * @param license
 	 *            is the {@link License} object which is to be looked up.
-	 * @return A {@link String} is returned containing the normalized name.
+	 * @return A {@link KnownLicense} is returned containing the known license.
 	 * @throws MojoFailureException
 	 *             is thrown if the normalized name cannot be looked up due to
 	 *             missing configuration.
 	 */
-	private String findName(License license) throws MojoFailureException {
+	private KnownLicense findKnowLicense(License license)
+			throws MojoFailureException {
 		String licenseKey = findLicenseKey(license);
-		KnownLicense knownLicense = findKnownLicense(licenseKey);
-		return knownLicense == null ? null : knownLicense.getName();
+		return findKnownLicense(licenseKey);
 	}
 
 	/**
@@ -327,9 +396,15 @@ public class ValidatorMojo extends AbstractMojo {
 	 * @param licenseOrApprovalMessage
 	 *            is the message to be printed containing the license or the
 	 *            appoval message.
+	 * @param knownLicense
+	 * @throws MojoExecutionException
+	 * @throws IOException
+	 * @throws MojoFailureException
 	 */
 	private void logArtifactResult(Artifact artifact,
-			ValidationResult validationResult, String licenseOrApprovalMessage) {
+			ValidationResult validationResult, String licenseOrApprovalMessage,
+			String licenseName, String licenseURL)
+			throws MojoExecutionException, MojoFailureException {
 		switch (validationResult) {
 		case VALID:
 			log.info("License check for artifact '"
@@ -344,11 +419,10 @@ public class ValidatorMojo extends AbstractMojo {
 					+ licenseOrApprovalMessage + ")");
 			break;
 		default:
-			log.error("License check for artifact '"
-					+ getArtifactIdentifier(artifact) + "': "
-					+ validationResult.name().toLowerCase() + " ("
-					+ licenseOrApprovalMessage + ")");
+			throw new MojoExecutionException("Invalid result.");
 		}
+		IOUtilities.writeResult(writer, artifact, validationResult,
+				licenseName, licenseURL, licenseOrApprovalMessage);
 	}
 
 	/**

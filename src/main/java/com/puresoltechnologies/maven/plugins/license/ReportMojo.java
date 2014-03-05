@@ -1,6 +1,11 @@
 package com.puresoltechnologies.maven.plugins.license;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.Locale;
 
 import org.apache.maven.doxia.module.xhtml.decoration.render.RenderingContext;
@@ -23,6 +28,9 @@ import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.settings.Settings;
 import org.codehaus.doxia.sink.Sink;
 
+import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
+
+@SuppressWarnings("deprecation")
 @Mojo(//
 name = "generate-report", //
 requiresDirectInvocation = false, //
@@ -40,13 +48,6 @@ phase = LifecyclePhase.GENERATE_SOURCES//
 )
 public class ReportMojo extends AbstractMojo implements MavenReport {
 
-	/**
-	 * Specifies the destination directory where documentation is to be saved
-	 * to.
-	 */
-	@Parameter(property = "destDir", alias = "destDir", defaultValue = "${project.build.directory}/licenses", required = true)
-	protected File outputDirectory;
-
 	@Component
 	private MavenProject project;
 
@@ -58,6 +59,16 @@ public class ReportMojo extends AbstractMojo implements MavenReport {
 
 	@Component
 	private MavenProjectBuilder projectBuilder;
+
+	/**
+	 * Specifies the destination directory where documentation is to be saved
+	 * to.
+	 */
+	@Parameter(property = "destDir", alias = "destDir", defaultValue = "${project.build.directory}/licenses", required = true)
+	protected File outputDirectory;
+
+	@Parameter(alias = "resultsDirectory", required = false, defaultValue = "${project.build.directory}/licenses")
+	private File resultsDirectory;
 
 	private final Log log;
 
@@ -86,54 +97,133 @@ public class ReportMojo extends AbstractMojo implements MavenReport {
 
 	@Override
 	public void generate(Sink sink, Locale locale) throws MavenReportException {
-		log.info("Creating report for licenses.");
-		log.info(getReportOutputDirectory().getPath());
 		try {
-			sink.head();
-			sink.title();
-			sink.text("Licenses Report");
-			sink.title_();
-			sink.head_();
-			sink.body();
-			sink.section1();
-			sink.sectionTitle1();
-			sink.text("Licenses Report");
-			sink.sectionTitle1_();
-			sink.section1_();
-			sink.table();
+			File resultsFile = IOUtilities
+					.getResultsFile(log, resultsDirectory);
+			generate(sink, resultsFile);
+		} catch (MojoExecutionException e) {
+			throw new MavenReportException("Could not generate report.", e);
+		}
+	}
+
+	private void generate(Sink sink, File resultsFile) {
+		try (FileInputStream inputStream = new FileInputStream(resultsFile);
+				InputStreamReader inputStreamReader = new InputStreamReader(
+						inputStream, Charset.defaultCharset());
+				BufferedReader bufferedReader = new BufferedReader(
+						inputStreamReader)) {
+			log.info("Creating report for licenses.");
+			log.info(getReportOutputDirectory().getPath());
+			try {
+				generateHead(sink);
+				generateBody(sink, bufferedReader);
+				sink.flush();
+			} finally {
+				sink.close();
+			}
+		} catch (IOException e) {
+		}
+	}
+
+	private void generateHead(Sink sink) {
+		sink.head();
+		sink.title();
+		sink.text("Licenses Report");
+		sink.title_();
+		sink.head_();
+	}
+
+	private void generateBody(Sink sink, BufferedReader bufferedReader)
+			throws IOException {
+		sink.body();
+		sink.section1();
+		sink.sectionTitle1();
+		sink.text("Licenses Report");
+		sink.sectionTitle1_();
+		sink.section1_();
+		generateTable(sink, bufferedReader);
+		sink.body_();
+	}
+
+	private void generateTable(Sink sink, BufferedReader bufferedReader)
+			throws IOException {
+		sink.table();
+		sink.tableCaption();
+		sink.text("Licenses of dependencies");
+		sink.tableCaption_();
+		generateTableHead(sink);
+		generateTableContent(sink, bufferedReader);
+		sink.table_();
+	}
+
+	private void generateTableHead(Sink sink) {
+		sink.tableRow();
+		sink.tableHeaderCell();
+		sink.text("GroupId");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("ArtifactId");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("Version");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("Classifier");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("Type");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("Scope");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("License");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("Comment");
+		sink.tableHeaderCell_();
+		sink.tableHeaderCell();
+		sink.text("Result");
+		sink.tableHeaderCell_();
+		sink.tableRow_();
+	}
+
+	private void generateTableContent(Sink sink, BufferedReader bufferedReader)
+			throws IOException {
+		String line;
+		while ((line = bufferedReader.readLine()) != null) {
+			String[] split = IOUtilities.split(line);
 			sink.tableRow();
-			sink.tableHeaderCell();
-			sink.text("GroupId");
-			sink.tableHeaderCell_();
-			sink.tableHeaderCell();
-			sink.text("ArtifactId");
-			sink.tableHeaderCell_();
-			sink.tableHeaderCell();
-			sink.text("Version");
-			sink.tableHeaderCell_();
-			sink.tableHeaderCell();
-			sink.text("License");
-			sink.tableHeaderCell_();
+			sink.tableCell();
+			sink.text(split[0]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[1]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[2]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[3]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[4]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[5]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.link(split[7]);
+			sink.text(split[6]);
+			sink.link_();
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[8]);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(split[9]);
+			sink.tableCell_();
 			sink.tableRow_();
-			sink.tableRow();
-			sink.tableCell();
-			sink.text("group");
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text("artifact");
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text("version");
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text("name/url");
-			sink.tableCell_();
-			sink.tableRow_();
-			sink.table_();
-			sink.body_();
-			sink.flush();
-		} finally {
-			sink.close();
 		}
 	}
 
@@ -143,12 +233,12 @@ public class ReportMojo extends AbstractMojo implements MavenReport {
 	}
 
 	@Override
-	public String getDescription(Locale arg0) {
+	public String getDescription(Locale locale) {
 		return "Reports all licenses for all dependencies for audit.";
 	}
 
 	@Override
-	public String getName(Locale arg0) {
+	public String getName(Locale locale) {
 		return "Licenses Report";
 	}
 

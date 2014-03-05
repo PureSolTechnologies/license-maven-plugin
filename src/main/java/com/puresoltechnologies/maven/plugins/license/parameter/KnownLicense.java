@@ -27,12 +27,6 @@ public class KnownLicense {
 	private URL url;
 
 	/**
-	 * This is the default constructor.
-	 */
-	public KnownLicense() {
-	}
-
-	/**
 	 * Sets the license's key.
 	 * 
 	 * @param key
@@ -89,4 +83,8 @@ public class KnownLicense {
 		this.url = url;
 	}
 
+	@Override
+	public String toString() {
+		return name + " (" + url + ")";
+	}
 }
