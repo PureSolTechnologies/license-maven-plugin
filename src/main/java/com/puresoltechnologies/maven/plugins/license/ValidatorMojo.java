@@ -116,8 +116,15 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	@Parameter(alias = "skipTestScope", required = false, defaultValue = "false")
 	private boolean skipTestScope;
 
-	private final Log log;
+	/**
+	 * This field contains the writer for the validation result file.
+	 */
 	private OutputStreamWriter writer;
+
+	/**
+	 * Contains the log file.
+	 */
+	private final Log log;
 
 	public ValidatorMojo() {
 		log = getLog();
@@ -125,7 +132,7 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		Set<Artifact> artifacts = loadArtifacts(recursive);
+		Set<Artifact> artifacts = loadArtifacts(recursive, skipTestScope);
 		log.debug("Artifact which are going to be checked:");
 		for (Artifact artifact : artifacts) {
 			log.debug("  * " + ArtifactUtilities.toString(artifact));
@@ -146,7 +153,6 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 */
 	private void validateArtifacts(Set<Artifact> artifacts)
 			throws MojoExecutionException, MojoFailureException {
-		boolean valid = true;
 		File licenseResultsFile = IOUtilities.createNewResultsFile(log,
 				outputDirectory);
 		try (FileOutputStream outputStream = new FileOutputStream(
@@ -154,6 +160,7 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			writer = new OutputStreamWriter(outputStream,
 					Charset.defaultCharset());
 			try {
+				boolean valid = true;
 				for (Artifact artifact : artifacts) {
 					if (!isArtifactValid(artifact)) {
 						if (failFast) {
@@ -162,6 +169,10 @@ public class ValidatorMojo extends AbstractValidationMojo {
 						}
 						valid = false;
 					}
+				}
+				if (!valid) {
+					throw new MojoFailureException(
+							"Invalid license(s) was/were found!");
 				}
 			} finally {
 				try {
@@ -174,9 +185,6 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			throw new MojoExecutionException(
 					"Could not write validation result to '"
 							+ licenseResultsFile + "'.", e);
-		}
-		if (!valid) {
-			throw new MojoFailureException("Invalid license(s) was/were found!");
 		}
 	}
 

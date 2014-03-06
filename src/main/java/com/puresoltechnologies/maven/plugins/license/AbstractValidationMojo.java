@@ -106,7 +106,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	 * @return A {@link Set} of {@link Artifact} is returned containing the
 	 *         artifacts found.
 	 */
-	protected Set<Artifact> retrieveArtifacts(boolean recursive) {
+	protected Set<Artifact> getArtifacts(boolean recursive) {
 		if (recursive) {
 			log.info("Recursive license validation is enabled. All direct and transitive dependency artifacts are going to be checked.");
 			@SuppressWarnings("unchecked")
@@ -127,47 +127,42 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	 *         artifacts found.
 	 * @throws MojoExecutionException
 	 */
-	protected Set<Artifact> loadArtifacts(boolean recursive)
-			throws MojoExecutionException {
-		log.debug("Local repository: " + localRepository.getUrl());
-		for (ArtifactRepository artifactRepository : remoteArtifactRepositories) {
-			log.debug("Remote repository: " + artifactRepository.getUrl());
-		}
-		Set<Artifact> set = new HashSet<>();
-		if (recursive) {
-			set.addAll(loadArtifacts(mavenProject.getArtifact()));
-		} else {
-			@SuppressWarnings("unchecked")
-			Set<Artifact> dependencyArtifacts = mavenProject
-					.getDependencyArtifacts();
-			set.addAll(dependencyArtifacts);
-		}
-		return set;
+	protected Set<Artifact> loadArtifacts(boolean recursive,
+			boolean skipTestScope) throws MojoExecutionException {
+		return loadArtifacts(mavenProject.getArtifact(), recursive,
+				skipTestScope);
 	}
 
-	private Set<? extends Artifact> loadArtifacts(Artifact parentArtifact)
+	private Set<Artifact> loadArtifacts(Artifact parentArtifact,
+			boolean recursive, boolean skipTestScope)
 			throws MojoExecutionException {
 		try {
-			MavenProject parentArtifactProject = getProjectBuilder()
+			MavenProject parentArtifactProject = mavenProjectBuilder
 					.buildFromRepository(parentArtifact,
 							remoteArtifactRepositories, localRepository);
 			@SuppressWarnings("unchecked")
 			List<Dependency> dependencies = parentArtifactProject
 					.getDependencies();
+			Set<Artifact> dependencyArtifacts = new HashSet<>();
 			if (dependencies != null) {
-				Set<Artifact> dependencyArtifacts = new HashSet<>();
 				for (Dependency dependency : dependencies) {
 					log.debug("Found dependency: " + dependency.toString());
+					if (skipTestScope
+							&& Artifact.SCOPE_TEST
+									.equals(dependency.getScope())) {
+						continue;
+					}
 					Artifact dependencyArtifact = DependencyUtilities
 							.buildArtifact(parentArtifact, dependency);
 					dependencyArtifacts.add(dependencyArtifact);
-					dependencyArtifacts
-							.addAll(loadArtifacts(dependencyArtifact));
+					if (recursive) {
+						dependencyArtifacts.addAll(loadArtifacts(
+								dependencyArtifact, recursive, skipTestScope));
+					}
+
 				}
-				return dependencyArtifacts;
-			} else {
-				return new HashSet<>();
 			}
+			return dependencyArtifacts;
 		} catch (ProjectBuildingException e) {
 			throw new MojoExecutionException(
 					"Could not load artifacts recursively.", e);
