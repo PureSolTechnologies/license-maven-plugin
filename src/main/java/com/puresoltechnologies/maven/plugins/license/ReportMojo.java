@@ -10,22 +10,16 @@ import java.util.Locale;
 
 import org.apache.maven.doxia.module.xhtml.decoration.render.RenderingContext;
 import org.apache.maven.doxia.siterenderer.sink.SiteRendererSink;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.reporting.MavenReport;
 import org.apache.maven.reporting.MavenReportException;
-import org.apache.maven.settings.Settings;
 import org.codehaus.doxia.sink.Sink;
 
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
@@ -46,19 +40,7 @@ requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME//
 goal = "generate-report",//
 phase = LifecyclePhase.GENERATE_SOURCES//
 )
-public class ReportMojo extends AbstractMojo implements MavenReport {
-
-	@Component
-	private MavenProject project;
-
-	@Component
-	private PluginDescriptor plugin;
-
-	@Component
-	private Settings settings;
-
-	@Component
-	private MavenProjectBuilder projectBuilder;
+public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
 	/**
 	 * Specifies the destination directory where documentation is to be saved

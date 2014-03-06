@@ -25,24 +25,17 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.model.License;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.MavenProjectBuilder;
-import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.settings.Settings;
 
+import com.puresoltechnologies.maven.plugins.license.internal.ArtifactUtilities;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 import com.puresoltechnologies.maven.plugins.license.parameter.ApprovedDependency;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
@@ -79,21 +72,9 @@ requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME//
 goal = "validate",//
 phase = LifecyclePhase.VALIDATE//
 )
-public class ValidatorMojo extends AbstractMojo {
+public class ValidatorMojo extends AbstractValidationMojo {
 
 	private static final String TEST_SCOPE_NAME = "test";
-
-	/**
-	 * This field contains the remote artifact repositories.
-	 */
-	@Parameter(required = false, defaultValue = "${project.remoteArtifactRepositories}", readonly = true)
-	private List<ArtifactRepository> remoteArtifactRepositories;
-
-	/**
-	 * This field contains the local repository.
-	 */
-	@Parameter(required = false, defaultValue = "${localRepository}", readonly = true)
-	private ArtifactRepository localRepository;
 
 	@Parameter(alias = "knownLicenses", required = true)
 	private Set<KnownLicense> knownLicenses;
@@ -135,19 +116,6 @@ public class ValidatorMojo extends AbstractMojo {
 	@Parameter(alias = "skipTestScope", required = false, defaultValue = "false")
 	private boolean skipTestScope;
 
-	@Component
-	private MavenProject project;
-
-	@Component
-	// for Maven 3 only
-	private PluginDescriptor plugin;
-
-	@Component
-	private Settings settings;
-
-	@Component
-	private MavenProjectBuilder projectBuilder;
-
 	private final Log log;
 	private OutputStreamWriter writer;
 
@@ -157,40 +125,12 @@ public class ValidatorMojo extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		Set<Artifact> artifacts = retrieveArtifacts();
+		Set<Artifact> artifacts = loadArtifacts(recursive);
 		log.debug("Artifact which are going to be checked:");
 		for (Artifact artifact : artifacts) {
-			String groupId = artifact.getGroupId();
-			String artifactId = artifact.getArtifactId();
-			String version = artifact.getVersion();
-			String classifier = artifact.getClassifier();
-			String type = artifact.getType();
-			String scope = artifact.getScope();
-			log.debug("  * " + groupId + ":" + groupId + ":" + artifactId + ":"
-					+ version + ":" + classifier + ":" + type + " (" + scope
-					+ ")");
+			log.debug("  * " + ArtifactUtilities.toString(artifact));
 		}
 		validateArtifacts(artifacts);
-	}
-
-	/**
-	 * This method retrievs all artifacts of the current Maven module.
-	 * 
-	 * @return A {@link Set} of {@link Artifact} is returned containing the
-	 *         artifacts found.
-	 */
-	private Set<Artifact> retrieveArtifacts() {
-		if (recursive) {
-			log.info("Recursive license validation is enabled. All direct and transitive dependency artifacts are going to be checked.");
-			@SuppressWarnings("unchecked")
-			Set<Artifact> set = project.getArtifacts();
-			return set;
-		} else {
-			log.info("Recursive license validation is disabled. All only direct dependency artifacts are going to be checked.");
-			@SuppressWarnings("unchecked")
-			Set<Artifact> set = project.getDependencyArtifacts();
-			return set;
-		}
 	}
 
 	/**
@@ -298,8 +238,8 @@ public class ValidatorMojo extends AbstractMojo {
 			} else {
 				KnownLicense knownLicense = findKnowLicense(license);
 				logArtifactResult(artifact, ValidationResult.VALID,
-						knownLicense.getName(), knownLicense.getName(),
-						knownLicense.getUrl().toString());
+						license.getName(), knownLicense.getName(), knownLicense
+								.getUrl().toString());
 			}
 		}
 		return valid;
@@ -317,7 +257,7 @@ public class ValidatorMojo extends AbstractMojo {
 	private KnownLicense findKnownLicense(Artifact artifact)
 			throws MojoFailureException {
 		String licenseKey = findLicenseKey(artifact);
-		return findKnownLicense(licenseKey);
+		return getKnownLicense(licenseKey);
 	}
 
 	/**
@@ -348,7 +288,7 @@ public class ValidatorMojo extends AbstractMojo {
 	private KnownLicense findKnowLicense(License license)
 			throws MojoFailureException {
 		String licenseKey = findLicenseKey(license);
-		return findKnownLicense(licenseKey);
+		return getKnownLicense(licenseKey);
 	}
 
 	/**
@@ -426,29 +366,6 @@ public class ValidatorMojo extends AbstractMojo {
 	}
 
 	/**
-	 * This method returns the license of an artifact.
-	 * 
-	 * @param artifact
-	 *            is the {@link Artifact} where the license is to be read from.
-	 * @return A {@link List} of {@link License} is returned containing the
-	 *         licenses specified in the artifact.
-	 * @throws MojoExecutionException
-	 *             is throws if the Maven run is faulty.
-	 */
-	private List<License> retrieveLicenses(Artifact artifact)
-			throws MojoExecutionException {
-		try {
-			MavenProject repository = projectBuilder.buildFromRepository(
-					artifact, remoteArtifactRepositories, localRepository);
-			@SuppressWarnings("unchecked")
-			List<License> licenses = repository.getLicenses();
-			return licenses;
-		} catch (ProjectBuildingException e) {
-			throw new MojoExecutionException("Cannot create repository.", e);
-		}
-	}
-
-	/**
 	 * This method returns the artifact identifier. The identifier returned here
 	 * is a single string containing the artifactId, groupId and version
 	 * separated by colons:
@@ -521,13 +438,16 @@ public class ValidatorMojo extends AbstractMojo {
 	 * @return A {@link KnownLicense} object is returned containing the license.
 	 *         <code>null</code> is returned if no license with the given key
 	 *         was found.
+	 * @throws MojoFailureException
 	 */
-	private KnownLicense findKnownLicense(String licenseKey) {
+	private KnownLicense getKnownLicense(String licenseKey)
+			throws MojoFailureException {
 		for (KnownLicense knownLicense : knownLicenses) {
 			if (knownLicense.getKey().equals(licenseKey)) {
 				return knownLicense;
 			}
 		}
-		return null;
+		throw new MojoFailureException("No known license for license key '"
+				+ licenseKey + "' found.");
 	}
 }
