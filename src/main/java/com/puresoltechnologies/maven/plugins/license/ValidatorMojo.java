@@ -36,6 +36,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import com.puresoltechnologies.maven.plugins.license.internal.ArtifactUtilities;
+import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 import com.puresoltechnologies.maven.plugins.license.parameter.ApprovedDependency;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
@@ -132,18 +133,19 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		Set<Artifact> artifacts = loadArtifacts(recursive, skipTestScope);
+		DependencyTree dependencyTree = loadArtifacts(recursive, skipTestScope);
 		log.debug("Artifact which are going to be checked:");
-		for (Artifact artifact : artifacts) {
-			log.debug("  * " + ArtifactUtilities.toString(artifact));
+		for (DependencyTree dependency : dependencyTree) {
+			log.debug("  * "
+					+ ArtifactUtilities.toString(dependency.getArtifact()));
 		}
-		validateArtifacts(artifacts);
+		validateArtifacts(dependencyTree);
 	}
 
 	/**
 	 * This method checks a set of artifacts for validity.
 	 * 
-	 * @param artifacts
+	 * @param dependencies
 	 *            is a {@link Set} of {@link Artifact} which is to be checked
 	 *            for validity.
 	 * @throws MojoExecutionException
@@ -151,7 +153,7 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 * @throws MojoFailureException
 	 *             is thrown if an invalid license is found.
 	 */
-	private void validateArtifacts(Set<Artifact> artifacts)
+	private void validateArtifacts(DependencyTree dependencyTree)
 			throws MojoExecutionException, MojoFailureException {
 		File licenseResultsFile = IOUtilities.createNewResultsFile(log,
 				outputDirectory);
@@ -161,7 +163,8 @@ public class ValidatorMojo extends AbstractValidationMojo {
 					Charset.defaultCharset());
 			try {
 				boolean valid = true;
-				for (Artifact artifact : artifacts) {
+				for (DependencyTree dependency : dependencyTree) {
+					Artifact artifact = dependency.getArtifact();
 					if (!isArtifactValid(artifact)) {
 						if (failFast) {
 							throw new MojoFailureException(

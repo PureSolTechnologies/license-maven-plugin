@@ -1,6 +1,5 @@
 package com.puresoltechnologies.maven.plugins.license;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -19,6 +18,7 @@ import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
+import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyUtilities;
 
 /**
@@ -103,6 +103,11 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	/**
 	 * This method retrievs all artifacts of the current Maven module.
 	 * 
+	 * <b>Attention(!):</b> This method uses
+	 * {@link MavenProject#getDependencyArtifacts()} and
+	 * {@link MavenProject#getArtifacts()} which are lazily filled with the
+	 * artifacts.
+	 * 
 	 * @return A {@link Set} of {@link Artifact} is returned containing the
 	 *         artifacts found.
 	 */
@@ -127,13 +132,13 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	 *         artifacts found.
 	 * @throws MojoExecutionException
 	 */
-	protected Set<Artifact> loadArtifacts(boolean recursive,
+	protected DependencyTree loadArtifacts(boolean recursive,
 			boolean skipTestScope) throws MojoExecutionException {
 		return loadArtifacts(mavenProject.getArtifact(), recursive,
 				skipTestScope);
 	}
 
-	private Set<Artifact> loadArtifacts(Artifact parentArtifact,
+	private DependencyTree loadArtifacts(Artifact parentArtifact,
 			boolean recursive, boolean skipTestScope)
 			throws MojoExecutionException {
 		try {
@@ -143,8 +148,13 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 			@SuppressWarnings("unchecked")
 			List<Dependency> dependencies = parentArtifactProject
 					.getDependencies();
-			Set<Artifact> dependencyArtifacts = new HashSet<>();
-			if (dependencies != null) {
+			@SuppressWarnings("unchecked")
+			List<License> licenses = parentArtifactProject.getLicenses();
+			DependencyTree dependencyTree = new DependencyTree(parentArtifact,
+					licenses);
+			if ((dependencies != null)
+					&& ((recursive) || (parentArtifact == mavenProject
+							.getArtifact()))) {
 				for (Dependency dependency : dependencies) {
 					log.debug("Found dependency: " + dependency.toString());
 					if (skipTestScope
@@ -154,15 +164,11 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 					}
 					Artifact dependencyArtifact = DependencyUtilities
 							.buildArtifact(parentArtifact, dependency);
-					dependencyArtifacts.add(dependencyArtifact);
-					if (recursive) {
-						dependencyArtifacts.addAll(loadArtifacts(
-								dependencyArtifact, recursive, skipTestScope));
-					}
-
+					dependencyTree.addDependency(loadArtifacts(
+							dependencyArtifact, recursive, skipTestScope));
 				}
 			}
-			return dependencyArtifacts;
+			return dependencyTree;
 		} catch (ProjectBuildingException e) {
 			throw new MojoExecutionException(
 					"Could not load artifacts recursively.", e);
