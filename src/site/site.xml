@@ -14,6 +14,7 @@
  		<menu name="Overview">
       			<item name="Introduction" href="introduction.html" /> 		
       			<item name="Usage" href="usage.html" /> 		
+      			<item name="Report Generation" href="report.html" /> 		
  		</menu>
  		<menu name="Project Documentation">
 	 		<item name="Project Information" href="project-info.html">

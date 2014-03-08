@@ -21,7 +21,7 @@
 				    &lt;plugin&gt;<br />
 				        &lt;groupId&gt;com.puresol.maven.plugins&lt;/groupId&gt;<br />
 				        &lt;artifactId&gt;license-plugin&lt;/artifactId&gt;<br />
-				        &lt;version&gt;1.0.0&lt;/version&gt;<br />
+				        &lt;version&gt;1.2.0&lt;/version&gt;<br />
 				        &lt;configuration&gt;<br />
 				            &lt;recursive&gt;true&lt;/recursive&gt;<br />
 				            &lt;validLicenses&gt;<br />
@@ -105,6 +105,10 @@
 					</td>
 				</tr>
 			</table>
+			<p>
+				For a real world example, have a look into the parent pom.xml of i18n4java project: 
+				<a href="https://github.com/RickRainerLudwig/i18n4java">https://github.com/RickRainerLudwig/i18n4java</a>
+			</p>
 		</section>
 	</body>
 </document>                                              

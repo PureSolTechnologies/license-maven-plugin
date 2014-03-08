@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+	<properties>
+		<title>Report</title>
+		<author email="ludwig@puresol-technologies.com">Rick-Rainer Ludwig</author>
+	</properties>
+
+	<!-- Optional HEAD element, which is copied as is into the XHTML <head> 
+		element -->
+	<!-- head> <meta . /> </head -->
+
+	<body>
+		<section name="Report">
+			<p>
+				The report can only be generated after the 'validate' goal was run. This run
+				stores all needed information and the results for the report to be generated.
+			</p>	
+			<p>
+				For the report generation the maven-site-plugin is needed and the configuration
+				is to be made in the &lt;reporting&gt; section in pom.xml. 
+			</p>
+			<p>
+				Sample plug-in configuration:
+			</p>
+			<source>
+				&lt;reporting&gt;<br />
+				    &lt;plugins&gt;<br />
+				        &lt;plugin&gt;<br />
+				            &lt;groupId&gt;com.puresol.maven.plugins&lt;/groupId&gt;<br />
+				            &lt;artifactId&gt;license-plugin&lt;/artifactId&gt;<br />
+				            &lt;version&gt;1.2.0&lt;/version&gt;<br />
+				        &lt;/plugin&gt;<br />
+				    &lt;/plugins&gt;<br />
+				&lt;/reporting&gt;<br />
+			</source>
+			<p>
+				There are no further settings needed. The settings needed are stored during the 'validate' goal run. 
+			</p>
+			<p>
+				For a real world example, have a look into the parent pom.xml of i18n4java project: 
+				<a href="https://github.com/RickRainerLudwig/i18n4java">https://github.com/RickRainerLudwig/i18n4java</a>
+			</p>
+		</section>
+	</body>
+</document>                                              
