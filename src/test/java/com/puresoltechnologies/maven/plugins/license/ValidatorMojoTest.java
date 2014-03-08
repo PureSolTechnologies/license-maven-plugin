@@ -1,24 +1,40 @@
 package com.puresoltechnologies.maven.plugins.license;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 
-import org.apache.maven.plugin.testing.AbstractMojoTestCase;
+import org.apache.maven.plugin.testing.MojoRule;
 import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 
-@Ignore("The Maven testing frameworks seem not to work properly...")
-public class ValidatorMojoTest extends AbstractMojoTestCase {
+@Ignore("Testing seems not to work in the current configuration. This needs to be fixed later.")
+public class ValidatorMojoTest {
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
+	@Rule
+	public final MojoRule rule = new MojoRule() {
 
+		@Override
+		protected void before() throws Throwable {
+		};
+
+		@Override
+		protected void after() {
+		};
+	};
+
+	@Test
 	public void test() throws Exception {
-		File testPom = new File(getBasedir(), "src/test/resources/config.xml");
+		File pom = new File("src/test/resources/config.xml");
 
-		ValidatorMojo mojo = (ValidatorMojo) lookupMojo("validate", testPom);
+		assertNotNull(pom);
+		assertTrue(pom.exists());
 
-		assertNotNull(mojo);
+		ValidatorMojo myMojo = (ValidatorMojo) rule.lookupMojo("validate", pom);
+		assertNotNull(myMojo);
+		myMojo.execute();
 	}
 
 }

@@ -28,7 +28,14 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
  */
 public class IOUtilities {
 
+	/**
+	 * The constant for the license validation result file.
+	 */
 	public static final String LICENSE_RESULTS_FILE = "licenses.csv";
+
+	/**
+	 * This is the constant for the settings properties file.
+	 */
 	public static final String LICENSE_SETTINGS_FILE = "settings.properties";
 
 	/**
@@ -48,6 +55,15 @@ public class IOUtilities {
 		return resultsFile;
 	}
 
+	/**
+	 * Returns the position of the results file.
+	 * 
+	 * @param log
+	 * @param outputDirectory
+	 * @return
+	 * @throws MojoExecutionException
+	 *             is thrown if no file is found.
+	 */
 	public static File getResultsFile(Log log, File outputDirectory)
 			throws MojoExecutionException {
 		File resultsFile = new File(outputDirectory,
@@ -78,6 +94,15 @@ public class IOUtilities {
 		return settingsFile;
 	}
 
+	/**
+	 * This method checks and returns the position of the settings file.
+	 * 
+	 * @param log
+	 * @param outputDirectory
+	 * @return
+	 * @throws MojoExecutionException
+	 *             is thrown if the file cannot be found.
+	 */
 	public static File getSettingsFile(Log log, File outputDirectory)
 			throws MojoExecutionException {
 		File resultsFile = new File(outputDirectory,
@@ -167,6 +192,13 @@ public class IOUtilities {
 		}
 	}
 
+	/**
+	 * Writes a CSV file line with the given {@link ValidationResult}.
+	 * 
+	 * @param writer
+	 * @param validationResult
+	 * @throws MojoExecutionException
+	 */
 	public static void writeResult(Writer writer,
 			ValidationResult validationResult) throws MojoExecutionException {
 		try {
@@ -206,6 +238,14 @@ public class IOUtilities {
 		}
 	}
 
+	/**
+	 * Reads a single CSV line from a {@link BufferedReader} and converts it
+	 * into a {@link ValidationResult}.
+	 * 
+	 * @param bufferedReader
+	 * @return
+	 * @throws MojoExecutionException
+	 */
 	public static ValidationResult readResult(BufferedReader bufferedReader)
 			throws MojoExecutionException {
 		try {
@@ -245,7 +285,13 @@ public class IOUtilities {
 		}
 	}
 
-	public static String[] split(String line) {
+	/**
+	 * This method splits a single CSV line into junks of {@link String}.
+	 * 
+	 * @param line
+	 * @return
+	 */
+	protected static String[] split(String line) {
 		List<String> results = new ArrayList<>();
 		StringBuffer buffer = new StringBuffer(line);
 		while (buffer.length() > 0) {

@@ -52,8 +52,14 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	@Parameter(required = false, defaultValue = "${localRepository}", readonly = true)
 	private ArtifactRepository localRepository;
 
+	/**
+	 * Keeps the reference to the logger.
+	 */
 	private final Log log;
 
+	/**
+	 * Default constructor.
+	 */
 	protected AbstractValidationMojo() {
 		log = getLog();
 	}
@@ -78,7 +84,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	}
 
 	/**
-	 * This method retrievs all artifacts of the current Maven module.
+	 * This method retrieves all artifacts of the current Maven module.
 	 * 
 	 * <b>Attention(!):</b> This method uses
 	 * {@link MavenProject#getDependencyArtifacts()} and
@@ -115,6 +121,19 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 				skipTestScope);
 	}
 
+	/**
+	 * Loads the artifact recursively.
+	 * 
+	 * @param parentArtifact
+	 * @param recursive
+	 *            specified whether all dependencies should be loaded
+	 *            recursively.
+	 * @param skipTestScope
+	 *            specified whether to skip test scoped artifacts or not.
+	 * @return A {@link DependencyTree} object is returned.
+	 * @throws MojoExecutionException
+	 *             is thrown if anything unexpected goes wrong.
+	 */
 	private DependencyTree loadArtifacts(Artifact parentArtifact,
 			boolean recursive, boolean skipTestScope)
 			throws MojoExecutionException {

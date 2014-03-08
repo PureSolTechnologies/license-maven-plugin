@@ -15,10 +15,24 @@ import org.apache.maven.model.License;
  */
 public class DependencyTree implements Iterable<DependencyTree> {
 
+	/**
+	 * Contains the child dependencies of the current node.
+	 */
 	private final List<DependencyTree> dependencies = new ArrayList<>();
+
+	/**
+	 * Contains the parent dependency.
+	 */
 	private DependencyTree parent;
 
+	/**
+	 * Is a reference to the {@link Artifact} which represents the current node.
+	 */
 	private final Artifact artifact;
+
+	/**
+	 * This list contains all {@link License}s related to the {@link #artifact}.
+	 */
 	private final List<License> licenses;
 
 	/**
