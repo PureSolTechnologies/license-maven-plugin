@@ -214,9 +214,9 @@ public class IOUtilities {
 			String type = artifactInformation.getType();
 			String scope = artifactInformation.getScope();
 			KnownLicense license = validationResult.getLicense();
-			String licenseName = null;
-			String licenseURL = null;
-			String licenseKey = null;
+			String licenseName = "";
+			String licenseURL = "";
+			String licenseKey = "";
 			if (license != null) {
 				licenseName = license.getName();
 				licenseURL = license.getUrl().toString();
@@ -224,13 +224,17 @@ public class IOUtilities {
 			}
 			ValidLicense originalLicense = validationResult
 					.getOriginalLicense();
-			String originalLicenseName = originalLicense.getName();
-			String comment = validationResult.getComment();
+			String originalLicenseName = "";
+			String comment = "";
+			if (originalLicense != null) {
+				originalLicenseName = originalLicense.getName();
+				comment = validationResult.getComment();
+			}
 			boolean valid = validationResult.isValid();
 			writer.write(groupId + "," + artifactId + "," + version + ","
 					+ classifier + "," + type + "," + scope + ",\""
-					+ licenseName + "\"," + licenseURL + "," + licenseKey + ","
-					+ originalLicenseName + ",\"" + comment + "\","
+					+ licenseName + "\"," + licenseURL + "," + licenseKey
+					+ ",\"" + originalLicenseName + "\",\"" + comment + "\","
 					+ String.valueOf(valid) + "\n");
 		} catch (IOException e) {
 			throw new MojoExecutionException(

@@ -234,7 +234,6 @@ public class ValidatorMojo extends AbstractValidationMojo {
 		Artifact artifact = dependency.getArtifact();
 		ArtifactInformation artifactInformation = new ArtifactInformation(
 				artifact);
-		log.debug("Check " + artifactInformation.getIdentifier() + ".");
 
 		if (skipTestScope) {
 			if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
