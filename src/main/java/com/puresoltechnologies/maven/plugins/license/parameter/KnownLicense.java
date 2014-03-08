@@ -1,5 +1,6 @@
 package com.puresoltechnologies.maven.plugins.license.parameter;
 
+import java.io.Serializable;
 import java.net.URL;
 
 /**
@@ -9,7 +10,9 @@ import java.net.URL;
  * 
  * @author Rick-Rainer Ludwig
  */
-public class KnownLicense {
+public class KnownLicense implements Serializable {
+
+	private static final long serialVersionUID = 8553746493922750000L;
 
 	/**
 	 * This field contains a unique key for a license to be used as internal
@@ -25,6 +28,16 @@ public class KnownLicense {
 	 * This field contains a URL to the full license text.
 	 */
 	private URL url;
+
+	public KnownLicense() {
+	}
+
+	public KnownLicense(String key, String name, URL url) {
+		super();
+		this.key = key;
+		this.name = name;
+		this.url = url;
+	}
 
 	/**
 	 * Sets the license's key.

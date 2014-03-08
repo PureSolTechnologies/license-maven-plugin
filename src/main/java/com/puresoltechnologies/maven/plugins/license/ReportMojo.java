@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Locale;
+import java.util.Properties;
 
 import org.apache.maven.doxia.module.xhtml.decoration.render.RenderingContext;
 import org.apache.maven.doxia.siterenderer.sink.SiteRendererSink;
@@ -22,6 +23,7 @@ import org.apache.maven.reporting.MavenReport;
 import org.apache.maven.reporting.MavenReportException;
 import org.codehaus.doxia.sink.Sink;
 
+import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 
 @SuppressWarnings("deprecation")
@@ -53,6 +55,9 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	private File resultsDirectory;
 
 	private final Log log;
+	private DependencyTree dependencyTree = null;
+	private boolean recursive = true;
+	private boolean skipTestScope = false;
 
 	public ReportMojo() {
 		log = getLog();
@@ -80,30 +85,40 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	@Override
 	public void generate(Sink sink, Locale locale) throws MavenReportException {
 		try {
-			File resultsFile = IOUtilities
-					.getResultsFile(log, resultsDirectory);
-			generate(sink, resultsFile);
+			readSettings();
+			dependencyTree = loadArtifacts(recursive, skipTestScope);
+			generate(sink);
 		} catch (MojoExecutionException e) {
 			throw new MavenReportException("Could not generate report.", e);
 		}
 	}
 
-	private void generate(Sink sink, File resultsFile) {
-		try (FileInputStream inputStream = new FileInputStream(resultsFile);
-				InputStreamReader inputStreamReader = new InputStreamReader(
-						inputStream, Charset.defaultCharset());
-				BufferedReader bufferedReader = new BufferedReader(
-						inputStreamReader)) {
-			log.info("Creating report for licenses.");
-			log.info(getReportOutputDirectory().getPath());
-			try {
-				generateHead(sink);
-				generateBody(sink, bufferedReader);
-				sink.flush();
-			} finally {
-				sink.close();
-			}
+	private void readSettings() throws MojoExecutionException {
+		File file = new File(resultsDirectory, "settings.xml");
+		try (FileInputStream fileOutputStream = new FileInputStream(file);
+				InputStreamReader propertiesReader = new InputStreamReader(
+						fileOutputStream, Charset.defaultCharset())) {
+			Properties properties = new Properties();
+			properties.load(propertiesReader);
+			recursive = Boolean.valueOf(properties.getProperty("recursive",
+					"true"));
+			skipTestScope = Boolean.valueOf(properties.getProperty(
+					"skipTestScope", "false"));
 		} catch (IOException e) {
+			throw new MojoExecutionException(
+					"Could not write settings.properties.", e);
+		}
+	}
+
+	private void generate(Sink sink) throws MavenReportException {
+		log.info("Creating report for licenses.");
+		log.info(getReportOutputDirectory().getPath());
+		try {
+			generateHead(sink);
+			generateBody(sink);
+			sink.flush();
+		} finally {
+			sink.close();
 		}
 	}
 
@@ -115,26 +130,26 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		sink.head_();
 	}
 
-	private void generateBody(Sink sink, BufferedReader bufferedReader)
-			throws IOException {
+	private void generateBody(Sink sink) throws MavenReportException {
 		sink.body();
 		sink.section1();
 		sink.sectionTitle1();
 		sink.text("Licenses Report");
 		sink.sectionTitle1_();
 		sink.section1_();
-		generateTable(sink, bufferedReader);
+		generateDirectDependencyTable(sink);
+		generateTransitiveDependencyTable(sink);
 		sink.body_();
 	}
 
-	private void generateTable(Sink sink, BufferedReader bufferedReader)
-			throws IOException {
+	private void generateDirectDependencyTable(Sink sink)
+			throws MavenReportException {
 		sink.table();
 		sink.tableCaption();
 		sink.text("Licenses of dependencies");
 		sink.tableCaption_();
 		generateTableHead(sink);
-		generateTableContent(sink, bufferedReader);
+		generateDirectDependenciesTableContent(sink);
 		sink.table_();
 	}
 
@@ -170,42 +185,119 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		sink.tableRow_();
 	}
 
-	private void generateTableContent(Sink sink, BufferedReader bufferedReader)
-			throws IOException {
-		String line;
-		while ((line = bufferedReader.readLine()) != null) {
-			String[] split = IOUtilities.split(line);
-			sink.tableRow();
-			sink.tableCell();
-			sink.text(split[0]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[1]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[2]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[3]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[4]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[5]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.link(split[7]);
-			sink.text(split[6]);
-			sink.link_();
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[8]);
-			sink.tableCell_();
-			sink.tableCell();
-			sink.text(split[9]);
-			sink.tableCell_();
-			sink.tableRow_();
+	private void generateDirectDependenciesTableContent(Sink sink)
+			throws MavenReportException {
+		try {
+			dependencyTree.getAllDependencies(); // TODO
+			File resultsFile = IOUtilities
+					.getResultsFile(log, resultsDirectory);
+			try (FileInputStream inputStream = new FileInputStream(resultsFile);
+					InputStreamReader inputStreamReader = new InputStreamReader(
+							inputStream, Charset.defaultCharset());
+					BufferedReader bufferedReader = new BufferedReader(
+							inputStreamReader)) {
+				String line;
+				while ((line = bufferedReader.readLine()) != null) {
+					String[] split = IOUtilities.split(line);
+					sink.tableRow();
+					sink.tableCell();
+					sink.text(split[0]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[1]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[2]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[3]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[4]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[5]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.link(split[7]);
+					sink.text(split[6]);
+					sink.link_();
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[8]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[9]);
+					sink.tableCell_();
+					sink.tableRow_();
+				}
+			} catch (IOException e) {
+			}
+		} catch (MojoExecutionException e) {
+			throw new MavenReportException("Could not generate report.", e);
+		}
+	}
+
+	private void generateTransitiveDependencyTable(Sink sink)
+			throws MavenReportException {
+		sink.table();
+		sink.tableCaption();
+		sink.text("Transitive Licenses");
+		sink.tableCaption_();
+		generateTableHead(sink);
+		generateTransitiveDependenciesTableContent(sink);
+		sink.table_();
+	}
+
+	private void generateTransitiveDependenciesTableContent(Sink sink)
+			throws MavenReportException {
+		try {
+			File resultsFile = IOUtilities
+					.getResultsFile(log, resultsDirectory);
+			try (FileInputStream inputStream = new FileInputStream(resultsFile);
+					InputStreamReader inputStreamReader = new InputStreamReader(
+							inputStream, Charset.defaultCharset());
+					BufferedReader bufferedReader = new BufferedReader(
+							inputStreamReader)) {
+				String line;
+				while ((line = bufferedReader.readLine()) != null) {
+					String[] split = IOUtilities.split(line);
+					sink.tableRow();
+					sink.tableCell();
+					sink.text(split[0]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[1]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[2]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[3]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[4]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[5]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.link(split[7]);
+					sink.text(split[6]);
+					sink.link_();
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[8]);
+					sink.tableCell_();
+					sink.tableCell();
+					sink.text(split[9]);
+					sink.tableCell_();
+					sink.tableRow_();
+				}
+			} catch (IOException e) {
+			}
+		} catch (MojoExecutionException e) {
+			throw new MavenReportException("Could not generate report.", e);
 		}
 	}
 

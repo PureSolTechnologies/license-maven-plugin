@@ -15,20 +15,52 @@
  */
 package com.puresoltechnologies.maven.plugins.license.parameter;
 
+import java.io.Serializable;
+
 /**
- * This enum specifies the result of the license validation.
+ * This class contains the result of a license validation.
  * 
  * @author Rick-Rainer Ludwig
  */
-public enum ValidationResult {
+public class ValidationResult implements Serializable {
 
-	/**
-	 * Specifies that the license is valid.
-	 */
-	VALID,
-	/**
-	 * Specifies that a license is invalid.
-	 */
-	INVALID;
+	private static final long serialVersionUID = 4714611770558756080L;
+
+	private final ArtifactInformation artifactInformation;
+	private final KnownLicense license;
+	private final ValidLicense originalLicense;
+	private final String comment;
+	private final boolean valid;
+
+	public ValidationResult(ArtifactInformation artifactInformation,
+			KnownLicense license, ValidLicense originalLicense, String comment,
+			boolean valid) {
+		super();
+		this.artifactInformation = artifactInformation;
+		this.license = license;
+		this.originalLicense = originalLicense;
+		this.comment = comment;
+		this.valid = valid;
+	}
+
+	public ArtifactInformation getArtifactInformation() {
+		return artifactInformation;
+	}
+
+	public KnownLicense getLicense() {
+		return license;
+	}
+
+	public ValidLicense getOriginalLicense() {
+		return originalLicense;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public boolean isValid() {
+		return valid;
+	}
 
 }

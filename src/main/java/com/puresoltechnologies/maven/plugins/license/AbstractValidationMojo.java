@@ -78,29 +78,6 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	}
 
 	/**
-	 * This method returns the license of an artifact.
-	 * 
-	 * @param artifact
-	 *            is the {@link Artifact} where the license is to be read from.
-	 * @return A {@link List} of {@link License} is returned containing the
-	 *         licenses specified in the artifact.
-	 * @throws MojoExecutionException
-	 *             is throws if the Maven run is faulty.
-	 */
-	protected final List<License> retrieveLicenses(Artifact artifact)
-			throws MojoExecutionException {
-		try {
-			MavenProject project = getProjectBuilder().buildFromRepository(
-					artifact, remoteArtifactRepositories, localRepository);
-			@SuppressWarnings("unchecked")
-			List<License> licenses = project.getLicenses();
-			return licenses;
-		} catch (ProjectBuildingException e) {
-			throw new MojoExecutionException("Cannot create repository.", e);
-		}
-	}
-
-	/**
 	 * This method retrievs all artifacts of the current Maven module.
 	 * 
 	 * <b>Attention(!):</b> This method uses

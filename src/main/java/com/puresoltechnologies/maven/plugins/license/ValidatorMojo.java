@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,7 @@ import com.puresoltechnologies.maven.plugins.license.internal.ArtifactUtilities;
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 import com.puresoltechnologies.maven.plugins.license.parameter.ApprovedDependency;
+import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
 import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
 import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
@@ -133,6 +135,7 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		storeSettings();
 		DependencyTree dependencyTree = loadArtifacts(recursive, skipTestScope);
 		log.debug("Artifact which are going to be checked:");
 		for (DependencyTree dependency : dependencyTree) {
@@ -140,6 +143,23 @@ public class ValidatorMojo extends AbstractValidationMojo {
 					+ ArtifactUtilities.toString(dependency.getArtifact()));
 		}
 		validateArtifacts(dependencyTree);
+	}
+
+	private void storeSettings() throws MojoExecutionException {
+		File file = new File(outputDirectory, "settings.properties");
+		try (FileOutputStream fileOutputStream = new FileOutputStream(file);
+				OutputStreamWriter propertiesWriter = new OutputStreamWriter(
+						fileOutputStream, Charset.defaultCharset())) {
+			Properties properties = new Properties();
+			properties.setProperty("recursive", Boolean.toString(recursive));
+			properties.setProperty("skipTestScope",
+					Boolean.toString(skipTestScope));
+			properties
+					.store(propertiesWriter, "license-maven-plugin settings.");
+		} catch (IOException e) {
+			throw new MojoExecutionException(
+					"Could not write settings.properties.", e);
+		}
 	}
 
 	/**
@@ -164,8 +184,12 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			try {
 				boolean valid = true;
 				for (DependencyTree dependency : dependencyTree) {
-					Artifact artifact = dependency.getArtifact();
-					if (!isArtifactValid(artifact)) {
+					if (dependency.getArtifact() == getMavenProject()
+							.getArtifact()) {
+						// skip self, it is not needed to be evaluated
+						continue;
+					}
+					if (!isArtifactValid(dependency)) {
 						if (failFast) {
 							throw new MojoFailureException(
 									"Invalid license(s) was/were found!");
@@ -205,52 +229,55 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 * @throws MojoExecutionException
 	 *             is thrown in case of a faulty Maven run.
 	 */
-	private boolean isArtifactValid(Artifact artifact)
+	private boolean isArtifactValid(DependencyTree dependency)
 			throws MojoFailureException, MojoExecutionException {
-		log.debug("Check " + getArtifactIdentifier(artifact) + ".");
-		List<License> licenses = retrieveLicenses(artifact);
+		Artifact artifact = dependency.getArtifact();
+		ArtifactInformation artifactInformation = new ArtifactInformation(
+				artifact);
+		log.debug("Check " + artifactInformation.getIdentifier() + ".");
+
+		if (skipTestScope) {
+			if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
+				ValidationResult result = new ValidationResult(
+						artifactInformation, null, null, "test scope", true);
+				logArtifactResult(result);
+				return true;
+			}
+		}
+
+		List<License> licenses = dependency.getLicenses();
 		if (licenses.size() == 0) {
-			if (isApprovedDependency(artifact)) {
-				KnownLicense knownLicense = findKnownLicense(artifact);
-				logArtifactResult(artifact, ValidationResult.VALID,
-						"no license found, but dependency is approved with license "
-								+ knownLicense.getName(),
-						knownLicense.getName(), knownLicense.getUrl()
-								.toString());
+			if (isApprovedDependency(artifactInformation)) {
+				KnownLicense knownLicense = findKnownLicense(artifactInformation);
+				ValidationResult result = new ValidationResult(
+						artifactInformation, knownLicense, null,
+						"no license found, but dependency is approved", true);
+				logArtifactResult(result);
 				return true;
 			} else {
-				if (skipTestScope) {
-					if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
-						logArtifactResult(artifact, ValidationResult.VALID,
-								"test scope", "", "");
-						return true;
-					}
-				} else {
-					logArtifactResult(artifact, ValidationResult.INVALID,
-							"no license found and artifact is not approved",
-							"", "");
-					return false;
-				}
+				ValidationResult result = new ValidationResult(
+						artifactInformation, null, null,
+						"no license found and artifact is not approved", false);
+				logArtifactResult(result);
+				return false;
 			}
 		}
 		boolean valid = true;
 		for (License license : licenses) {
 			if (!isValidLicense(license)) {
-				if (skipTestScope) {
-					if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
-						logArtifactResult(artifact, ValidationResult.VALID,
-								"test scope", license.getName(), "");
-					}
-				} else {
-					logArtifactResult(artifact, ValidationResult.INVALID,
-							license.getName(), license.getName(), "");
-					valid = false;
-				}
+				ValidationResult result = new ValidationResult(
+						artifactInformation, null, new ValidLicense(null,
+								license.getName()), "license is not approved",
+						false);
+				logArtifactResult(result);
+				valid = false;
 			} else {
 				KnownLicense knownLicense = findKnowLicense(license);
-				logArtifactResult(artifact, ValidationResult.VALID,
-						license.getName(), knownLicense.getName(), knownLicense
-								.getUrl().toString());
+				ValidationResult result = new ValidationResult(
+						artifactInformation, knownLicense, new ValidLicense(
+								knownLicense.getKey(), license.getName()),
+						"license is approved", true);
+				logArtifactResult(result);
 			}
 		}
 		return valid;
@@ -259,15 +286,16 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	/**
 	 * Finds a known license for the given {@link Artifact}.
 	 * 
-	 * @param artifact
+	 * @param artifactInformation
 	 *            is the {@link Artifact} for which the known license is to be
 	 *            looked up.
 	 * @return A {@link KnownLicense} is returned.
 	 * @throws MojoFailureException
 	 */
-	private KnownLicense findKnownLicense(Artifact artifact)
+	private KnownLicense findKnownLicense(
+			ArtifactInformation artifactInformation)
 			throws MojoFailureException {
-		String licenseKey = findLicenseKey(artifact);
+		String licenseKey = findLicenseKey(artifactInformation);
 		return getKnownLicense(licenseKey);
 	}
 
@@ -280,9 +308,9 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 * @return A {@link String} containing the key is returned.
 	 * @throws MojoFailureException
 	 */
-	private String findLicenseKey(Artifact artifact)
+	private String findLicenseKey(ArtifactInformation artifactInformation)
 			throws MojoFailureException {
-		ApprovedDependency approvedDependency = findApprovedDependency(artifact);
+		ApprovedDependency approvedDependency = findApprovedDependency(artifactInformation);
 		return approvedDependency == null ? null : approvedDependency.getKey();
 	}
 
@@ -313,14 +341,15 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 *         approved. <code>false</code> is returned otherwise.
 	 * @throws MojoFailureException
 	 */
-	private boolean isApprovedDependency(Artifact artifact)
+	private boolean isApprovedDependency(ArtifactInformation artifactInformation)
 			throws MojoFailureException {
-		return findApprovedDependency(artifact) != null;
+		return findApprovedDependency(artifactInformation) != null;
 	}
 
-	private ApprovedDependency findApprovedDependency(Artifact artifact)
+	private ApprovedDependency findApprovedDependency(
+			ArtifactInformation artifactInformation)
 			throws MojoFailureException {
-		String artifactIdentifier = getArtifactIdentifier(artifact);
+		String artifactIdentifier = artifactInformation.getIdentifier();
 		for (ApprovedDependency approvedDependency : approvedDependencies) {
 			String approvedDependencyIdentifier = approvedDependency
 					.getIdentifier();
@@ -352,47 +381,21 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 * @throws IOException
 	 * @throws MojoFailureException
 	 */
-	private void logArtifactResult(Artifact artifact,
-			ValidationResult validationResult, String licenseOrApprovalMessage,
-			String licenseName, String licenseURL)
+	private void logArtifactResult(ValidationResult validationResult)
 			throws MojoExecutionException, MojoFailureException {
-		switch (validationResult) {
-		case VALID:
+		ArtifactInformation artifactInformation = validationResult
+				.getArtifactInformation();
+		if (validationResult.isValid()) {
 			log.info("License check for artifact '"
-					+ getArtifactIdentifier(artifact) + "': "
-					+ validationResult.name().toLowerCase() + " ("
-					+ licenseOrApprovalMessage + ")");
-			break;
-		case INVALID:
-			log.error("License check for artifact '"
-					+ getArtifactIdentifier(artifact) + "': "
-					+ validationResult.name().toLowerCase() + " ("
-					+ licenseOrApprovalMessage + ")");
-			break;
-		default:
-			throw new MojoExecutionException("Invalid result.");
-		}
-		IOUtilities.writeResult(writer, artifact, validationResult,
-				licenseName, licenseURL, licenseOrApprovalMessage);
-	}
+					+ artifactInformation.getIdentifier() + "': " + "valid"
+					+ " (" + validationResult.getComment() + ")");
+		} else {
 
-	/**
-	 * This method returns the artifact identifier. The identifier returned here
-	 * is a single string containing the artifactId, groupId and version
-	 * separated by colons:
-	 * 
-	 * ${artifactId}:${groupId}:${version}
-	 * 
-	 * @param artifact
-	 *            is the {@link Artifact} of which the identifier is to be
-	 *            built.
-	 * @return A {@link String} is returned containing the identifier.
-	 */
-	private String getArtifactIdentifier(Artifact artifact) {
-		String groupId = artifact.getGroupId();
-		String artifactId = artifact.getArtifactId();
-		String version = artifact.getVersion();
-		return groupId + ":" + artifactId + ":" + version;
+			log.error("License check for artifact '"
+					+ artifactInformation.getIdentifier() + "': " + "invalid"
+					+ " (" + validationResult.getComment() + ")");
+		}
+		IOUtilities.writeResult(writer, validationResult);
 	}
 
 	/**

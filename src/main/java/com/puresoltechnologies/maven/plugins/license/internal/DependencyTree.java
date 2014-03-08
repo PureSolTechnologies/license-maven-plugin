@@ -58,7 +58,7 @@ public class DependencyTree implements Iterable<DependencyTree> {
 	 * 
 	 * @return A {@link License} is returned.
 	 */
-	public List<License> getLicense() {
+	public List<License> getLicenses() {
 		return licenses;
 	}
 
