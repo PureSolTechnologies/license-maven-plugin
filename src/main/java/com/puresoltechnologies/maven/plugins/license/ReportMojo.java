@@ -25,6 +25,7 @@ import org.codehaus.doxia.sink.Sink;
 
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
+import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
 
 @SuppressWarnings("deprecation")
 @Mojo(//
@@ -137,8 +138,24 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		sink.text("Licenses Report");
 		sink.sectionTitle1_();
 		sink.section1_();
+		sink.section2();
+		sink.sectionTitle1();
+		sink.text("Directly Used Licenses");
+		sink.sectionTitle1_();
+		sink.section2_();
 		generateDirectDependencyTable(sink);
+		sink.section2();
+		sink.sectionTitle1();
+		sink.text("Transitively Used Licenses");
+		sink.sectionTitle1_();
+		sink.section2_();
 		generateTransitiveDependencyTable(sink);
+		sink.section2();
+		sink.sectionTitle1();
+		sink.text("Dependency Hierarchy");
+		sink.sectionTitle1_();
+		sink.section2_();
+		generateDependencyHierachy(sink);
 		sink.body_();
 	}
 
@@ -299,6 +316,31 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		} catch (MojoExecutionException e) {
 			throw new MavenReportException("Could not generate report.", e);
 		}
+	}
+
+	/**
+	 * The hierarchy of the dependencies.
+	 * 
+	 * @param sink
+	 */
+	private void generateDependencyHierachy(Sink sink) {
+		generateDependency(sink, dependencyTree);
+	}
+
+	private void generateDependency(Sink sink, DependencyTree parentDependency) {
+		sink.list();
+		for (DependencyTree dependency : parentDependency.getDependencies()) {
+			sink.listItem();
+			ArtifactInformation artifactInformation = new ArtifactInformation(
+					dependency.getArtifact());
+			sink.bold();
+			sink.text(artifactInformation.getIdentifier());
+			sink.bold_();
+			sink.lineBreak();
+			generateDependency(sink, dependency);
+			sink.listItem_();
+		}
+		sink.list_();
 	}
 
 	@Override
