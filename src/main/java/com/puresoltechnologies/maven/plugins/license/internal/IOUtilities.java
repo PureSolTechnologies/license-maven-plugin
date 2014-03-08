@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
 import java.net.URL;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 
 import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
@@ -31,6 +29,7 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 public class IOUtilities {
 
 	public static final String LICENSE_RESULTS_FILE = "licenses.csv";
+	public static final String LICENSE_SETTINGS_FILE = "settings.properties";
 
 	/**
 	 * Creates a new and empty results file.
@@ -58,6 +57,36 @@ public class IOUtilities {
 					+ "' is not present.");
 		} else if (!resultsFile.isFile()) {
 			throw new MojoExecutionException("Results file '" + resultsFile
+					+ "' is not a file, but is supposed to be.");
+		}
+		return resultsFile;
+	}
+
+	/**
+	 * Creates a new and empty settings file.
+	 * 
+	 * @param outputDirectory
+	 * @return
+	 * @throws MojoExecutionException
+	 */
+	public static File createNewSettingsFile(Log log, File outputDirectory)
+			throws MojoExecutionException {
+		createDirectoryIfNotPresent(log, outputDirectory);
+		File settingsFile = new File(outputDirectory, LICENSE_SETTINGS_FILE);
+		deleteFileIfPresent(log, settingsFile);
+		createFileIfNotPresent(log, settingsFile);
+		return settingsFile;
+	}
+
+	public static File getSettingsFile(Log log, File outputDirectory)
+			throws MojoExecutionException {
+		File resultsFile = new File(outputDirectory,
+				IOUtilities.LICENSE_SETTINGS_FILE);
+		if (!resultsFile.exists()) {
+			throw new MojoExecutionException("Settings file '" + resultsFile
+					+ "' is not present.");
+		} else if (!resultsFile.isFile()) {
+			throw new MojoExecutionException("Settings file '" + resultsFile
 					+ "' is not a file, but is supposed to be.");
 		}
 		return resultsFile;
@@ -139,8 +168,7 @@ public class IOUtilities {
 	}
 
 	public static void writeResult(Writer writer,
-			ValidationResult validationResult) throws MojoFailureException,
-			MojoExecutionException {
+			ValidationResult validationResult) throws MojoExecutionException {
 		try {
 			if (writer == null) {
 				return;
@@ -148,29 +176,11 @@ public class IOUtilities {
 			ArtifactInformation artifactInformation = validationResult
 					.getArtifactInformation();
 			String groupId = artifactInformation.getGroupId();
-			if (groupId == null) {
-				groupId = "";
-			}
 			String artifactId = artifactInformation.getArtifactId();
-			if (artifactId == null) {
-				artifactId = "";
-			}
 			String version = artifactInformation.getVersion();
-			if (version == null) {
-				version = "";
-			}
 			String classifier = artifactInformation.getClassifier();
-			if (classifier == null) {
-				classifier = "";
-			}
 			String type = artifactInformation.getType();
-			if (type == null) {
-				type = "";
-			}
 			String scope = artifactInformation.getScope();
-			if (scope == null) {
-				scope = "";
-			}
 			KnownLicense license = validationResult.getLicense();
 			String licenseName = null;
 			String licenseURL = null;
@@ -196,10 +206,10 @@ public class IOUtilities {
 		}
 	}
 
-	public static ValidationResult readResult(Reader reader)
-			throws MojoFailureException, MojoExecutionException {
-		try (BufferedReader bufferedReader = new BufferedReader(reader)) {
-			if (reader == null) {
+	public static ValidationResult readResult(BufferedReader bufferedReader)
+			throws MojoExecutionException {
+		try {
+			if (bufferedReader == null) {
 				throw new IllegalArgumentException("Reader must not be null!");
 			}
 			String line = bufferedReader.readLine();

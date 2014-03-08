@@ -6,7 +6,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.maven.doxia.module.xhtml.decoration.render.RenderingContext;
@@ -26,6 +31,9 @@ import org.codehaus.doxia.sink.Sink;
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
+import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
+import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
+import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 
 @SuppressWarnings("deprecation")
 @Mojo(//
@@ -56,6 +64,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	private File resultsDirectory;
 
 	private final Log log;
+	private final Map<ArtifactInformation, List<ValidationResult>> results = new HashMap<>();
 	private DependencyTree dependencyTree = null;
 	private boolean recursive = true;
 	private boolean skipTestScope = false;
@@ -87,6 +96,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	public void generate(Sink sink, Locale locale) throws MavenReportException {
 		try {
 			readSettings();
+			readResults();
 			dependencyTree = loadArtifacts(recursive, skipTestScope);
 			generate(sink);
 		} catch (MojoExecutionException e) {
@@ -95,7 +105,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	}
 
 	private void readSettings() throws MojoExecutionException {
-		File file = new File(resultsDirectory, "settings.xml");
+		File file = IOUtilities.getSettingsFile(log, resultsDirectory);
 		try (FileInputStream fileOutputStream = new FileInputStream(file);
 				InputStreamReader propertiesReader = new InputStreamReader(
 						fileOutputStream, Charset.defaultCharset())) {
@@ -108,6 +118,46 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		} catch (IOException e) {
 			throw new MojoExecutionException(
 					"Could not write settings.properties.", e);
+		}
+	}
+
+	private void readResults() throws MojoExecutionException {
+		File resultsFile = IOUtilities.getResultsFile(log, resultsDirectory);
+		try (FileInputStream fileInputStream = new FileInputStream(resultsFile);
+				InputStreamReader inputStreamReader = new InputStreamReader(
+						fileInputStream, Charset.defaultCharset());
+				BufferedReader bufferedReader = new BufferedReader(
+						inputStreamReader);) {
+			results.clear();
+			for (;;) {
+				ValidationResult validationResult = IOUtilities
+						.readResult(bufferedReader);
+				if (validationResult == null) {
+					break;
+				}
+				log.debug(" ** "
+						+ validationResult.getArtifactInformation().toString());
+				ArtifactInformation artifactInformation = validationResult
+						.getArtifactInformation();
+				List<ValidationResult> artifactResults = results
+						.get(artifactInformation);
+				if (artifactResults == null) {
+					artifactResults = new ArrayList<>();
+					results.put(artifactInformation, artifactResults);
+				}
+				artifactResults.add(validationResult);
+			}
+			for (ArtifactInformation key : results.keySet()) {
+				for (ValidationResult validationResult2 : results.get(key)) {
+					log.debug("Result found: "
+							+ validationResult2.getArtifactInformation()
+									.toString());
+				}
+			}
+		} catch (IOException e) {
+			throw new MojoExecutionException(
+					"Could not read license validation resultsf from file '"
+							+ resultsFile + "'.");
 		}
 	}
 
@@ -137,33 +187,45 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		sink.sectionTitle1();
 		sink.text("Licenses Report");
 		sink.sectionTitle1_();
-		sink.section1_();
+		sink.paragraph();
+		sink.text("This report contains an overview of all licenses related to the project and a validation whether these licenses are approved or not.");
+		sink.paragraph_();
+
 		sink.section2();
-		sink.sectionTitle1();
+		sink.sectionTitle2();
 		sink.text("Directly Used Licenses");
-		sink.sectionTitle1_();
-		sink.section2_();
+		sink.sectionTitle2_();
 		generateDirectDependencyTable(sink);
+		sink.section2_();
+
 		sink.section2();
-		sink.sectionTitle1();
+		sink.sectionTitle2();
 		sink.text("Transitively Used Licenses");
-		sink.sectionTitle1_();
-		sink.section2_();
+		sink.sectionTitle2_();
 		generateTransitiveDependencyTable(sink);
-		sink.section2();
-		sink.sectionTitle1();
-		sink.text("Dependency Hierarchy");
-		sink.sectionTitle1_();
 		sink.section2_();
+
+		sink.section2();
+		sink.sectionTitle2();
+		sink.text("Dependency Hierarchy");
+		sink.sectionTitle2_();
 		generateDependencyHierachy(sink);
+		sink.section2_();
+
+		sink.section1_();
+
 		sink.body_();
 	}
 
 	private void generateDirectDependencyTable(Sink sink)
 			throws MavenReportException {
+		sink.paragraph();
+		sink.text("This section contains a list of all licenses which are directly referenced to with dependencies of this maven project.");
+		sink.paragraph_();
+
 		sink.table();
 		sink.tableCaption();
-		sink.text("Licenses of dependencies");
+		sink.text("Licenses");
 		sink.tableCaption_();
 		generateTableHead(sink);
 		generateDirectDependenciesTableContent(sink);
@@ -173,93 +235,74 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	private void generateTableHead(Sink sink) {
 		sink.tableRow();
 		sink.tableHeaderCell();
-		sink.text("GroupId");
-		sink.tableHeaderCell_();
-		sink.tableHeaderCell();
-		sink.text("ArtifactId");
-		sink.tableHeaderCell_();
-		sink.tableHeaderCell();
-		sink.text("Version");
-		sink.tableHeaderCell_();
-		sink.tableHeaderCell();
-		sink.text("Classifier");
-		sink.tableHeaderCell_();
-		sink.tableHeaderCell();
-		sink.text("Type");
-		sink.tableHeaderCell_();
-		sink.tableHeaderCell();
-		sink.text("Scope");
+		sink.text("License from Artifact");
 		sink.tableHeaderCell_();
 		sink.tableHeaderCell();
 		sink.text("License");
 		sink.tableHeaderCell_();
 		sink.tableHeaderCell();
-		sink.text("Comment");
-		sink.tableHeaderCell_();
-		sink.tableHeaderCell();
-		sink.text("Result");
+		sink.text("Validation");
 		sink.tableHeaderCell_();
 		sink.tableRow_();
 	}
 
 	private void generateDirectDependenciesTableContent(Sink sink)
 			throws MavenReportException {
-		try {
-			dependencyTree.getAllDependencies(); // TODO
-			File resultsFile = IOUtilities
-					.getResultsFile(log, resultsDirectory);
-			try (FileInputStream inputStream = new FileInputStream(resultsFile);
-					InputStreamReader inputStreamReader = new InputStreamReader(
-							inputStream, Charset.defaultCharset());
-					BufferedReader bufferedReader = new BufferedReader(
-							inputStreamReader)) {
-				String line;
-				while ((line = bufferedReader.readLine()) != null) {
-					String[] split = IOUtilities.split(line);
-					sink.tableRow();
-					sink.tableCell();
-					sink.text(split[0]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[1]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[2]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[3]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[4]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[5]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.link(split[7]);
-					sink.text(split[6]);
-					sink.link_();
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[8]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[9]);
-					sink.tableCell_();
-					sink.tableRow_();
+		List<DependencyTree> dependencies = dependencyTree.getDependencies();
+		Map<String, ValidationResult> directLicenses = new HashMap<>();
+		getLicenses(dependencies, directLicenses);
+
+		for (Entry<String, ValidationResult> license : directLicenses
+				.entrySet()) {
+			String originalLicenseName = license.getKey();
+			ValidationResult validationResult = license.getValue();
+			sink.tableRow();
+			sink.tableCell();
+			sink.text(originalLicenseName);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.link(validationResult.getLicense().getUrl().toString());
+			sink.text(validationResult.getLicense().getName());
+			sink.link_();
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(validationResult.isValid() ? "valid" : "invalid");
+			sink.tableCell_();
+			sink.tableRow_();
+		}
+	}
+
+	private void getLicenses(List<DependencyTree> dependencyTree,
+			Map<String, ValidationResult> licenses) {
+		for (DependencyTree dependency : dependencyTree) {
+			ArtifactInformation artifactInformation = new ArtifactInformation(
+					dependency.getArtifact());
+			List<ValidationResult> validationResults = results
+					.get(artifactInformation);
+			for (ValidationResult validationResult : validationResults) {
+				String originalLicenseName = validationResult
+						.getOriginalLicense().getName();
+				if (!licenses.containsKey(originalLicenseName)) {
+					licenses.put(originalLicenseName, validationResult);
 				}
-			} catch (IOException e) {
 			}
-		} catch (MojoExecutionException e) {
-			throw new MavenReportException("Could not generate report.", e);
+
 		}
 	}
 
 	private void generateTransitiveDependencyTable(Sink sink)
 			throws MavenReportException {
+		sink.paragraph();
+		sink.text("This section contains a list of all licenses which are "
+				+ "not directly referenced to with dependencies of this "
+				+ "maven project. All these licenses are coming in "
+				+ "transitively via dependencies of the direct project "
+				+ "dependencies.");
+		sink.paragraph_();
+
 		sink.table();
 		sink.tableCaption();
-		sink.text("Transitive Licenses");
+		sink.text("Licenses");
 		sink.tableCaption_();
 		generateTableHead(sink);
 		generateTransitiveDependenciesTableContent(sink);
@@ -268,53 +311,32 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
 	private void generateTransitiveDependenciesTableContent(Sink sink)
 			throws MavenReportException {
-		try {
-			File resultsFile = IOUtilities
-					.getResultsFile(log, resultsDirectory);
-			try (FileInputStream inputStream = new FileInputStream(resultsFile);
-					InputStreamReader inputStreamReader = new InputStreamReader(
-							inputStream, Charset.defaultCharset());
-					BufferedReader bufferedReader = new BufferedReader(
-							inputStreamReader)) {
-				String line;
-				while ((line = bufferedReader.readLine()) != null) {
-					String[] split = IOUtilities.split(line);
-					sink.tableRow();
-					sink.tableCell();
-					sink.text(split[0]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[1]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[2]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[3]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[4]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[5]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.link(split[7]);
-					sink.text(split[6]);
-					sink.link_();
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[8]);
-					sink.tableCell_();
-					sink.tableCell();
-					sink.text(split[9]);
-					sink.tableCell_();
-					sink.tableRow_();
-				}
-			} catch (IOException e) {
+		List<DependencyTree> dependencies = dependencyTree.getDependencies();
+		Map<String, ValidationResult> transitiveLicenses = new HashMap<>();
+		for (DependencyTree dependency : dependencies) {
+			for (DependencyTree dependency2 : dependency.getDependencies()) {
+				getLicenses(dependency2.getAllDependencies(),
+						transitiveLicenses);
 			}
-		} catch (MojoExecutionException e) {
-			throw new MavenReportException("Could not generate report.", e);
+		}
+
+		for (Entry<String, ValidationResult> license : transitiveLicenses
+				.entrySet()) {
+			String originalLicenseName = license.getKey();
+			ValidationResult validationResult = license.getValue();
+			sink.tableRow();
+			sink.tableCell();
+			sink.text(originalLicenseName);
+			sink.tableCell_();
+			sink.tableCell();
+			sink.link(validationResult.getLicense().getUrl().toString());
+			sink.text(validationResult.getLicense().getName());
+			sink.link_();
+			sink.tableCell_();
+			sink.tableCell();
+			sink.text(validationResult.isValid() ? "valid" : "invalid");
+			sink.tableCell_();
+			sink.tableRow_();
 		}
 	}
 
@@ -324,6 +346,9 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	 * @param sink
 	 */
 	private void generateDependencyHierachy(Sink sink) {
+		sink.paragraph();
+		sink.text("This section contains the full hierarchy of dependencies, its licenses and their validation result.");
+		sink.paragraph_();
 		generateDependency(sink, dependencyTree);
 	}
 
@@ -333,9 +358,25 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 			sink.listItem();
 			ArtifactInformation artifactInformation = new ArtifactInformation(
 					dependency.getArtifact());
+			log.debug("Hierarchy for " + artifactInformation.toString());
 			sink.bold();
-			sink.text(artifactInformation.getIdentifier());
+			sink.text(artifactInformation.toString());
 			sink.bold_();
+			for (ValidationResult result : results.get(artifactInformation)) {
+				KnownLicense license = result.getLicense();
+				ValidLicense originalLicense = result.getOriginalLicense();
+				String valid = result.isValid() ? "valid" : "invalid";
+				sink.lineBreak();
+				sink.italic();
+				sink.text(valid);
+				sink.text(": ");
+				sink.text(originalLicense.getName());
+				sink.text(" / ");
+				sink.link(license.getUrl().toString());
+				sink.text(license.getName());
+				sink.link_();
+				sink.italic_();
+			}
 			sink.lineBreak();
 			generateDependency(sink, dependency);
 			sink.listItem_();

@@ -146,7 +146,7 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	}
 
 	private void storeSettings() throws MojoExecutionException {
-		File file = new File(outputDirectory, "settings.properties");
+		File file = IOUtilities.createNewSettingsFile(log, outputDirectory);
 		try (FileOutputStream fileOutputStream = new FileOutputStream(file);
 				OutputStreamWriter propertiesWriter = new OutputStreamWriter(
 						fileOutputStream, Charset.defaultCharset())) {
