@@ -39,9 +39,9 @@
       			<item name="FindBugs Report" href="findbugs.html" />
  			</item>
     	</menu>
- 		<menu name="PureSol Technologies Links">
+ 		<menu name="Recommended Links">
 	 		<item name="PureSol Technologies" href="http://puresol-technologies.com" target="_blank" />
-   			<item name="Open Source Contributions" href="http://oss.puresol-technologies.com" target="_blank" />
+	 		<item name="PureSol Technologies' Open Source Contributions" href="http://opensource.puresol-technologies.com" target="_blank" />
     	</menu>
     </body>
 </project>

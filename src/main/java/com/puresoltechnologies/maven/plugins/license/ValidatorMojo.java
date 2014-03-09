@@ -387,17 +387,31 @@ public class ValidatorMojo extends AbstractValidationMojo {
 		ValidLicense originalLicense = validationResult.getOriginalLicense();
 		KnownLicense license = validationResult.getLicense();
 		if (validationResult.isValid()) {
-			log.info("License '" + originalLicense.getName()
-					+ "' checked for artifact '"
-					+ artifactInformation.getIdentifier() + "': "
-					+ "valid as '" + license.getName() + "'" + " ("
-					+ validationResult.getComment() + ")");
+			if (originalLicense != null) {
+				log.info("License '" + originalLicense.getName()
+						+ "' checked for artifact '"
+						+ artifactInformation.getIdentifier() + "': "
+						+ "valid as '" + license.getName() + "'" + " ("
+						+ validationResult.getComment() + ")");
+			} else {
+				log.info("License checked for artifact '"
+						+ artifactInformation.getIdentifier() + "': "
+						+ "valid as '" + license.getName() + "'" + " ("
+						+ validationResult.getComment() + ")");
+			}
 		} else {
-
-			log.error("License '" + originalLicense.getName()
-					+ "' checked for artifact '"
-					+ artifactInformation.getIdentifier() + "': " + "invalid"
-					+ " (" + validationResult.getComment() + ")");
+			if (originalLicense != null) {
+				log.error("License '" + originalLicense.getName()
+						+ "' checked for artifact '"
+						+ artifactInformation.getIdentifier() + "': "
+						+ "invalid" + " (" + validationResult.getComment()
+						+ ")");
+			} else {
+				log.error("License checked for artifact '"
+						+ artifactInformation.getIdentifier() + "': "
+						+ "invalid" + " (" + validationResult.getComment()
+						+ ")");
+			}
 		}
 		IOUtilities.writeResult(writer, validationResult);
 	}
