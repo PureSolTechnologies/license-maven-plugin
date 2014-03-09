@@ -384,13 +384,18 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			throws MojoExecutionException, MojoFailureException {
 		ArtifactInformation artifactInformation = validationResult
 				.getArtifactInformation();
+		ValidLicense originalLicense = validationResult.getOriginalLicense();
+		KnownLicense license = validationResult.getLicense();
 		if (validationResult.isValid()) {
-			log.info("License check for artifact '"
-					+ artifactInformation.getIdentifier() + "': " + "valid"
-					+ " (" + validationResult.getComment() + ")");
+			log.info("License '" + originalLicense.getName()
+					+ "' checked for artifact '"
+					+ artifactInformation.getIdentifier() + "': "
+					+ "valid as '" + license.getName() + "'" + " ("
+					+ validationResult.getComment() + ")");
 		} else {
 
-			log.error("License check for artifact '"
+			log.error("License '" + originalLicense.getName()
+					+ "' checked for artifact '"
 					+ artifactInformation.getIdentifier() + "': " + "invalid"
 					+ " (" + validationResult.getComment() + ")");
 		}
