@@ -19,7 +19,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -39,10 +42,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import com.puresoltechnologies.maven.plugins.license.internal.ArtifactUtilities;
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
-import com.puresoltechnologies.maven.plugins.license.parameter.ApprovedDependency;
 import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
-import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
 import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 
 /**
@@ -81,18 +82,6 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
 	@Parameter(alias = "knownLicenses", required = true)
 	private Set<KnownLicense> knownLicenses;
-
-	/**
-	 * This list contains the list of valid license names.
-	 */
-	@Parameter(alias = "validLicenses", required = true)
-	private Set<ValidLicense> validLicenses;
-
-	/**
-	 * This list contains the regexp string for approved artifacts.
-	 */
-	@Parameter(alias = "approvedDependencies", required = true)
-	private Set<ApprovedDependency> approvedDependencies;
 
 	@Parameter(alias = "outputDirectory", required = false, defaultValue = "${project.build.directory}/licenses")
 	private File outputDirectory;
@@ -201,12 +190,19 @@ public class ValidatorMojo extends AbstractValidationMojo {
 					Charset.defaultCharset());
 			try {
 				boolean valid = true;
+				List<String> checkedArtifact = new ArrayList<>();
 				for (DependencyTree dependency : dependencyTree) {
-					if (dependency.getArtifact() == getMavenProject()
-							.getArtifact()) {
+					Artifact artifact = dependency.getArtifact();
+					if (artifact == getMavenProject().getArtifact()) {
 						// skip self, it is not needed to be evaluated
 						continue;
 					}
+					String artifactIdentifier = ArtifactUtilities
+							.toString(artifact);
+					if (checkedArtifact.contains(artifactIdentifier)) {
+						continue;
+					}
+					checkedArtifact.add(artifactIdentifier);
 					if (!isArtifactValid(dependency)) {
 						if (failFast) {
 							throw new MojoFailureException(
@@ -256,7 +252,8 @@ public class ValidatorMojo extends AbstractValidationMojo {
 		if (skipTestScope) {
 			if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
 				ValidationResult result = new ValidationResult(
-						artifactInformation, null, null, "test scope", true);
+						artifactInformation, null, null, null, "test scope",
+						true);
 				logArtifactResult(result);
 				return true;
 			}
@@ -264,16 +261,16 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
 		List<License> licenses = dependency.getLicenses();
 		if (licenses.size() == 0) {
-			if (isApprovedDependency(artifactInformation)) {
+			if (isValid(artifactInformation)) {
 				KnownLicense knownLicense = findKnownLicense(artifactInformation);
 				ValidationResult result = new ValidationResult(
-						artifactInformation, knownLicense, null,
+						artifactInformation, knownLicense, null, null,
 						"no license found, but dependency is approved", true);
 				logArtifactResult(result);
 				return true;
 			} else {
 				ValidationResult result = new ValidationResult(
-						artifactInformation, null, null,
+						artifactInformation, null, null, null,
 						"no license found and artifact is not approved", false);
 				logArtifactResult(result);
 				return false;
@@ -281,19 +278,24 @@ public class ValidatorMojo extends AbstractValidationMojo {
 		}
 		boolean valid = true;
 		for (License license : licenses) {
-			if (!isValidLicense(license)) {
+			String licenseName = license.getName();
+			URL licenseURL;
+			try {
+				licenseURL = new URL(license.getUrl());
+			} catch (MalformedURLException e) {
+				licenseURL = null;
+			}
+			if (!isValid(license)) {
 				ValidationResult result = new ValidationResult(
-						artifactInformation, null, new ValidLicense(null,
-								license.getName()), "license is not approved",
-						false);
+						artifactInformation, null, licenseName, licenseURL,
+						"license is not approved", false);
 				logArtifactResult(result);
 				valid = false;
 			} else {
-				KnownLicense knownLicense = findKnowLicense(license);
+				KnownLicense knownLicense = findKnownLicense(license);
 				ValidationResult result = new ValidationResult(
-						artifactInformation, knownLicense, new ValidLicense(
-								knownLicense.getKey(), license.getName()),
-						"license is approved", true);
+						artifactInformation, knownLicense, licenseName,
+						licenseURL, "license is approved", true);
 				logArtifactResult(result);
 			}
 		}
@@ -301,34 +303,16 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	}
 
 	/**
-	 * Finds a known license for the given {@link Artifact}.
+	 * This method checks the validity of a single license.
 	 * 
-	 * @param artifactInformation
-	 *            is the {@link Artifact} for which the known license is to be
-	 *            looked up.
-	 * @return A {@link KnownLicense} is returned.
+	 * @param license
+	 *            is the {@link License} to be checked.
+	 * @return <code>true</code> is returned if the license is valid.
+	 *         <code>false</code> is returned otherwise.
 	 * @throws MojoFailureException
 	 */
-	private KnownLicense findKnownLicense(
-			ArtifactInformation artifactInformation)
-			throws MojoFailureException {
-		String licenseKey = findLicenseKey(artifactInformation);
-		return getKnownLicense(licenseKey);
-	}
-
-	/**
-	 * Finds the license key for the given {@link Artifact}.
-	 * 
-	 * @param artifact
-	 *            is the {@link Artifact} for which the license key is to be
-	 *            found.
-	 * @return A {@link String} containing the key is returned.
-	 * @throws MojoFailureException
-	 */
-	private String findLicenseKey(ArtifactInformation artifactInformation)
-			throws MojoFailureException {
-		ApprovedDependency approvedDependency = findApprovedDependency(artifactInformation);
-		return approvedDependency == null ? null : approvedDependency.getKey();
+	private boolean isValid(License license) throws MojoFailureException {
+		return findKnownLicense(license) != null;
 	}
 
 	/**
@@ -341,10 +325,23 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 *             is thrown if the normalized name cannot be looked up due to
 	 *             missing configuration.
 	 */
-	private KnownLicense findKnowLicense(License license)
+	private KnownLicense findKnownLicense(License license)
 			throws MojoFailureException {
-		String licenseKey = findLicenseKey(license);
-		return getKnownLicense(licenseKey);
+		for (KnownLicense knownLicense : knownLicenses) {
+			if (knownLicense.getName().equals(license.getName())) {
+				return knownLicense;
+			}
+			for (String alias : knownLicense.getAliases()) {
+				if ((alias == null) || (alias.isEmpty())) {
+					throw new MojoFailureException(
+							"An alias was found without identifier.");
+				}
+				if (alias.equals(license.getName())) {
+					return knownLicense;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -358,26 +355,26 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 *         approved. <code>false</code> is returned otherwise.
 	 * @throws MojoFailureException
 	 */
-	private boolean isApprovedDependency(ArtifactInformation artifactInformation)
+	private boolean isValid(ArtifactInformation artifactInformation)
 			throws MojoFailureException {
-		return findApprovedDependency(artifactInformation) != null;
+		return findKnownLicense(artifactInformation) != null;
 	}
 
-	private ApprovedDependency findApprovedDependency(
+	private KnownLicense findKnownLicense(
 			ArtifactInformation artifactInformation)
 			throws MojoFailureException {
-		String artifactIdentifier = artifactInformation.getIdentifier();
-		for (ApprovedDependency approvedDependency : approvedDependencies) {
-			String approvedDependencyIdentifier = approvedDependency
-					.getIdentifier();
-			if ((approvedDependencyIdentifier == null)
-					|| (approvedDependencyIdentifier.isEmpty())) {
-				throw new MojoFailureException(
-						"An approved dependency was found without identifier.");
-			}
-			if (Pattern.matches(approvedDependencyIdentifier,
-					artifactIdentifier)) {
-				return approvedDependency;
+		for (KnownLicense knownLicense : knownLicenses) {
+			for (String approvedDependency : knownLicense
+					.getApprovedDependencies()) {
+				if ((approvedDependency == null)
+						|| (approvedDependency.isEmpty())) {
+					throw new MojoFailureException(
+							"An approved dependency was found without identifier.");
+				}
+				if (Pattern.matches(approvedDependency,
+						artifactInformation.getIdentifier())) {
+					return knownLicense;
+				}
 			}
 		}
 		return null;
@@ -402,11 +399,11 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			throws MojoExecutionException, MojoFailureException {
 		ArtifactInformation artifactInformation = validationResult
 				.getArtifactInformation();
-		ValidLicense originalLicense = validationResult.getOriginalLicense();
+		String originalLicenseName = validationResult.getOriginalLicenseName();
 		KnownLicense license = validationResult.getLicense();
 		if (validationResult.isValid()) {
-			if (originalLicense != null) {
-				log.info("License '" + originalLicense.getName()
+			if (originalLicenseName != null) {
+				log.info("License '" + originalLicenseName
 						+ "' checked for artifact '"
 						+ artifactInformation.getIdentifier() + "': "
 						+ "valid as '" + license.getName() + "'" + " ("
@@ -418,8 +415,8 @@ public class ValidatorMojo extends AbstractValidationMojo {
 						+ validationResult.getComment() + ")");
 			}
 		} else {
-			if (originalLicense != null) {
-				log.error("License '" + originalLicense.getName()
+			if (originalLicenseName != null) {
+				log.error("License '" + originalLicenseName
 						+ "' checked for artifact '"
 						+ artifactInformation.getIdentifier() + "': "
 						+ "invalid" + " (" + validationResult.getComment()
@@ -432,72 +429,5 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			}
 		}
 		IOUtilities.writeResult(writer, validationResult);
-	}
-
-	/**
-	 * This method checks the validity of a single license.
-	 * 
-	 * @param license
-	 *            is the {@link License} to be checked.
-	 * @return <code>true</code> is returned if the license is valid.
-	 *         <code>false</code> is returned otherwise.
-	 * @throws MojoFailureException
-	 */
-	private boolean isValidLicense(License license) throws MojoFailureException {
-		return findValidLicense(license) != null;
-	}
-
-	private ValidLicense findValidLicense(License license)
-			throws MojoFailureException {
-		String licenseName = license.getName();
-		if ((licenseName == null) || (licenseName.isEmpty())) {
-			return null;
-		}
-		for (ValidLicense validLicense : validLicenses) {
-			String validLicenseName = validLicense.getName();
-			if ((validLicenseName == null) || (validLicenseName.isEmpty())) {
-				throw new MojoFailureException(
-						"A valid license without name was found.");
-			}
-			if (validLicenseName.equals(licenseName)) {
-				return validLicense;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * This method find the license key for the found license object.
-	 * 
-	 * @param license
-	 *            is the {@link License} object to be looked up.
-	 * @return A {@link String} is returned containing the license key.
-	 * @throws MojoFailureException
-	 *             is thrown in case of missing configuration.
-	 */
-	private String findLicenseKey(License license) throws MojoFailureException {
-		ValidLicense validLicense = findValidLicense(license);
-		return validLicense == null ? null : validLicense.getKey();
-	}
-
-	/**
-	 * This method looks for a known license for a given license key.
-	 * 
-	 * @param licenseKey
-	 *            is the key of the license.
-	 * @return A {@link KnownLicense} object is returned containing the license.
-	 *         <code>null</code> is returned if no license with the given key
-	 *         was found.
-	 * @throws MojoFailureException
-	 */
-	private KnownLicense getKnownLicense(String licenseKey)
-			throws MojoFailureException {
-		for (KnownLicense knownLicense : knownLicenses) {
-			if (knownLicense.getKey().equals(licenseKey)) {
-				return knownLicense;
-			}
-		}
-		throw new MojoFailureException("No known license for license key '"
-				+ licenseKey + "' found.");
 	}
 }

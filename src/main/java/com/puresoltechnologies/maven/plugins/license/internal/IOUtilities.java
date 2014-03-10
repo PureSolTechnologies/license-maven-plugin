@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,7 +19,6 @@ import org.apache.maven.plugin.logging.Log;
 
 import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
-import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
 import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 
 /**
@@ -216,25 +216,26 @@ public class IOUtilities {
 			KnownLicense license = validationResult.getLicense();
 			String licenseName = "";
 			String licenseURL = "";
-			String licenseKey = "";
 			if (license != null) {
 				licenseName = license.getName();
 				licenseURL = license.getUrl().toString();
-				licenseKey = license.getKey();
 			}
-			ValidLicense originalLicense = validationResult
-					.getOriginalLicense();
-			String originalLicenseName = "";
-			String comment = "";
-			if (originalLicense != null) {
-				originalLicenseName = originalLicense.getName();
-				comment = validationResult.getComment();
+			String originalLicenseName = validationResult
+					.getOriginalLicenseName();
+			if (originalLicenseName == null) {
+				originalLicenseName = "";
 			}
+			URL originalLicenseURL = validationResult.getOriginalLicenseURL();
+			if (originalLicenseURL == null) {
+				originalLicenseURL = new URL("http://opensource.org/");
+			}
+			String comment = validationResult.getComment();
 			boolean valid = validationResult.isValid();
 			writer.write(groupId + "," + artifactId + "," + version + ","
 					+ classifier + "," + type + "," + scope + ",\""
-					+ licenseName + "\"," + licenseURL + "," + licenseKey
-					+ ",\"" + originalLicenseName + "\",\"" + comment + "\","
+					+ licenseName + "\"," + licenseURL + ",\""
+					+ originalLicenseName + "\","
+					+ originalLicenseURL.toString() + ",\"" + comment + "\","
 					+ String.valueOf(valid) + "\n");
 		} catch (IOException e) {
 			throw new MojoExecutionException(
@@ -269,19 +270,17 @@ public class IOUtilities {
 			String scope = splits[5];
 			String licenseName = splits[6];
 			URL licenseURL = new URL(splits[7]);
-			String licenseKey = splits[8];
-			String originalLicenseName = splits[9];
+			String originalLicenseName = splits[8];
+			URL originalLicenseURL = new URL(splits[9]);
 			String comment = splits[10];
 			boolean valid = Boolean.valueOf(splits[11]);
 			ArtifactInformation artifactInformation = new ArtifactInformation(
 					groupId, artifactId, version, classifier, type, scope);
-			KnownLicense license = new KnownLicense(licenseKey, licenseName,
-					licenseURL);
-			ValidLicense originalLicense = new ValidLicense(licenseKey,
-					originalLicenseName);
+			KnownLicense license = new KnownLicense(licenseName, licenseURL,
+					valid, new HashSet<String>(), new HashSet<String>());
 			ValidationResult validationResult = new ValidationResult(
-					artifactInformation, license, originalLicense, comment,
-					valid);
+					artifactInformation, license, originalLicenseName,
+					originalLicenseURL, comment, valid);
 			return validationResult;
 		} catch (IOException e) {
 			throw new MojoExecutionException(

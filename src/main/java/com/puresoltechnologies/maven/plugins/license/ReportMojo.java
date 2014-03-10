@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +33,6 @@ import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.IOUtilities;
 import com.puresoltechnologies.maven.plugins.license.parameter.ArtifactInformation;
 import com.puresoltechnologies.maven.plugins.license.parameter.KnownLicense;
-import com.puresoltechnologies.maven.plugins.license.parameter.ValidLicense;
 import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 
 /**
@@ -207,7 +207,9 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 					artifactResults = new ArrayList<>();
 					results.put(artifactInformation, artifactResults);
 				}
-				artifactResults.add(validationResult);
+				if (!artifactResults.contains(validationResult)) {
+					artifactResults.add(validationResult);
+				}
 			}
 		} catch (IOException e) {
 			throw new MojoExecutionException(
@@ -333,9 +335,16 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 				.entrySet()) {
 			String originalLicenseName = license.getKey();
 			ValidationResult validationResult = license.getValue();
+			URL originalLicenseURL = validationResult.getOriginalLicenseURL();
 			sink.tableRow();
 			sink.tableCell();
-			sink.text(originalLicenseName);
+			if (originalLicenseURL == null) {
+				sink.text(originalLicenseName);
+			} else {
+				sink.link(originalLicenseURL.toString());
+				sink.text(originalLicenseName);
+				sink.link_();
+			}
 			sink.tableCell_();
 			sink.tableCell();
 			sink.link(validationResult.getLicense().getUrl().toString());
@@ -358,7 +367,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 					.get(artifactInformation);
 			for (ValidationResult validationResult : validationResults) {
 				String originalLicenseName = validationResult
-						.getOriginalLicense().getName();
+						.getOriginalLicenseName();
 				if (!licenses.containsKey(originalLicenseName)) {
 					licenses.put(originalLicenseName, validationResult);
 				}
@@ -407,9 +416,16 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 				.entrySet()) {
 			String originalLicenseName = license.getKey();
 			ValidationResult validationResult = license.getValue();
+			URL originalLicenseURL = validationResult.getOriginalLicenseURL();
 			sink.tableRow();
 			sink.tableCell();
-			sink.text(originalLicenseName);
+			if (originalLicenseURL == null) {
+				sink.text(originalLicenseName);
+			} else {
+				sink.link(originalLicenseURL.toString());
+				sink.text(originalLicenseName);
+				sink.link_();
+			}
 			sink.tableCell_();
 			sink.tableCell();
 			sink.link(validationResult.getLicense().getUrl().toString());
@@ -452,13 +468,20 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 			sink.bold_();
 			for (ValidationResult result : results.get(artifactInformation)) {
 				KnownLicense license = result.getLicense();
-				ValidLicense originalLicense = result.getOriginalLicense();
+				String originalLicenseName = result.getOriginalLicenseName();
+				URL originalLicenseURL = result.getOriginalLicenseURL();
 				String valid = result.isValid() ? "valid" : "invalid";
 				sink.lineBreak();
 				sink.italic();
 				sink.text(valid);
 				sink.text(": ");
-				sink.text(originalLicense.getName());
+				if (originalLicenseURL == null) {
+					sink.text(originalLicenseName);
+				} else {
+					sink.link(originalLicenseURL.toString());
+					sink.text(originalLicenseName);
+					sink.link_();
+				}
 				sink.text(" / ");
 				sink.link(license.getUrl().toString());
 				sink.text(license.getName());
