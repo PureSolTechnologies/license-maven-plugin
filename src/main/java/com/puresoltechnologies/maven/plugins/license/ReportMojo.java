@@ -74,6 +74,12 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	private File resultsDirectory;
 
 	/**
+	 * Specified whether or not to skip archetypes with optional flag.
+	 */
+	@Parameter(alias = "skipOptionals", required = false, defaultValue = "false")
+	private boolean skipOptionals;
+
+	/**
 	 * Keeps the reference to the logger.
 	 */
 	private final Log log;
@@ -99,7 +105,13 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	 * Specified whether or not test scope dependencies should be skipped. This
 	 * flag is set with {@link #readSettings()}.
 	 */
-	private boolean skipTestScope = false;
+	private boolean skipTestScope = true;
+
+	/**
+	 * Specified whether or not provided scope dependencies should be skipped.
+	 * This flag is set with {@link #readSettings()}.
+	 */
+	private boolean skipProvidedScope = true;
 
 	/**
 	 * Default constructor.s
@@ -132,7 +144,8 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 		try {
 			readSettings();
 			readResults();
-			dependencyTree = loadArtifacts(recursive, skipTestScope);
+			dependencyTree = loadArtifacts(recursive, skipTestScope,
+					skipProvidedScope, skipOptionals);
 			generate(sink);
 		} catch (MojoExecutionException e) {
 			throw new MavenReportException("Could not generate report.", e);
@@ -155,7 +168,11 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 			recursive = Boolean.valueOf(properties.getProperty("recursive",
 					"true"));
 			skipTestScope = Boolean.valueOf(properties.getProperty(
-					"skipTestScope", "false"));
+					"skipTestScope", "true"));
+			skipProvidedScope = Boolean.valueOf(properties.getProperty(
+					"skipProvidedScope", "true"));
+			skipOptionals = Boolean.valueOf(properties.getProperty(
+					"skipOptionals", "true"));
 		} catch (IOException e) {
 			throw new MojoExecutionException(
 					"Could not write settings.properties.", e);
@@ -182,8 +199,6 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 				if (validationResult == null) {
 					break;
 				}
-				log.debug("License validation result found: "
-						+ validationResult.getArtifactInformation().toString());
 				ArtifactInformation artifactInformation = validationResult
 						.getArtifactInformation();
 				List<ValidationResult> artifactResults = results

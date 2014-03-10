@@ -116,8 +116,21 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	 * Specifies whether or not the dependencies in test scope should be
 	 * skipped. Default is false.
 	 */
-	@Parameter(alias = "skipTestScope", required = false, defaultValue = "false")
+	@Parameter(alias = "skipTestScope", required = false, defaultValue = "true")
 	private boolean skipTestScope;
+
+	/**
+	 * Specifies whether or not the dependencies in provided scope should be
+	 * skipped. Default is false.
+	 */
+	@Parameter(alias = "skipProvidedScope", required = false, defaultValue = "true")
+	private boolean skipProvidedScope;
+
+	/**
+	 * Specified whether or not to skip archetypes with optional flag.
+	 */
+	@Parameter(alias = "skipOptionals", required = false, defaultValue = "true")
+	private boolean skipOptionals;
 
 	/**
 	 * This field contains the writer for the validation result file.
@@ -136,7 +149,8 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		storeSettings();
-		DependencyTree dependencyTree = loadArtifacts(recursive, skipTestScope);
+		DependencyTree dependencyTree = loadArtifacts(recursive, skipTestScope,
+				skipProvidedScope, skipOptionals);
 		log.debug("Artifact which are going to be checked:");
 		for (DependencyTree dependency : dependencyTree) {
 			log.debug("  * "
@@ -154,6 +168,10 @@ public class ValidatorMojo extends AbstractValidationMojo {
 			properties.setProperty("recursive", Boolean.toString(recursive));
 			properties.setProperty("skipTestScope",
 					Boolean.toString(skipTestScope));
+			properties.setProperty("skipProvidedScope",
+					Boolean.toString(skipProvidedScope));
+			properties.setProperty("skipOptionals",
+					Boolean.toString(skipOptionals));
 			properties
 					.store(propertiesWriter, "license-maven-plugin settings.");
 		} catch (IOException e) {

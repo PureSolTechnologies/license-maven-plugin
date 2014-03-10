@@ -1,5 +1,6 @@
 package com.puresoltechnologies.maven.plugins.license;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import org.apache.maven.project.MavenProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.settings.Settings;
 
+import com.puresoltechnologies.maven.plugins.license.internal.ArtifactUtilities;
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyTree;
 import com.puresoltechnologies.maven.plugins.license.internal.DependencyUtilities;
 
@@ -116,15 +118,16 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	 * @throws MojoExecutionException
 	 */
 	protected DependencyTree loadArtifacts(boolean recursive,
-			boolean skipTestScope) throws MojoExecutionException {
-		return loadArtifacts(mavenProject.getArtifact(), recursive,
-				skipTestScope);
+			boolean skipTestScope, boolean skipProvidedScope,
+			boolean skipOptionals) throws MojoExecutionException {
+		return loadArtifacts(0, null, mavenProject.getArtifact(), recursive,
+				skipTestScope, skipProvidedScope, skipOptionals);
 	}
 
 	/**
 	 * Loads the artifact recursively.
 	 * 
-	 * @param parentArtifact
+	 * @param artifact
 	 * @param recursive
 	 *            specified whether all dependencies should be loaded
 	 *            recursively.
@@ -134,34 +137,62 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	 * @throws MojoExecutionException
 	 *             is thrown if anything unexpected goes wrong.
 	 */
-	private DependencyTree loadArtifacts(Artifact parentArtifact,
-			boolean recursive, boolean skipTestScope)
+	private DependencyTree loadArtifacts(int depth,
+			DependencyTree parentDependencyTree, Artifact artifact,
+			boolean recursive, boolean skipTestScope,
+			boolean skipProvidedScope, boolean skipOptionals)
 			throws MojoExecutionException {
 		try {
 			MavenProject parentArtifactProject = mavenProjectBuilder
-					.buildFromRepository(parentArtifact,
-							remoteArtifactRepositories, localRepository);
+					.buildFromRepository(artifact, remoteArtifactRepositories,
+							localRepository);
 			@SuppressWarnings("unchecked")
 			List<Dependency> dependencies = parentArtifactProject
 					.getDependencies();
 			@SuppressWarnings("unchecked")
 			List<License> licenses = parentArtifactProject.getLicenses();
-			DependencyTree dependencyTree = new DependencyTree(parentArtifact,
+			DependencyTree dependencyTree = new DependencyTree(artifact,
 					licenses);
+			if (parentDependencyTree != null) {
+				parentDependencyTree.addDependency(dependencyTree);
+			}
 			if ((dependencies != null)
-					&& ((recursive) || (parentArtifact == mavenProject
-							.getArtifact()))) {
+					&& ((recursive) || (artifact == mavenProject.getArtifact()))) {
 				for (Dependency dependency : dependencies) {
-					log.debug("Found dependency: " + dependency.toString());
+					StringBuffer buffer = new StringBuffer();
+					for (int i = 0; i < depth; i++) {
+						buffer.append("    ");
+					}
+					buffer.append("|-> ");
+					log.debug(buffer.toString()
+							+ ArtifactUtilities.toString(dependency));
 					if (skipTestScope
 							&& Artifact.SCOPE_TEST
 									.equals(dependency.getScope())) {
+						log.debug(buffer.toString() + "test scope is skipped");
+						continue;
+					}
+					if (skipProvidedScope
+							&& Artifact.SCOPE_PROVIDED.equals(dependency
+									.getScope())) {
+						log.debug(buffer.toString()
+								+ "provided scope is skipped");
+						continue;
+					}
+					if (skipOptionals && dependency.isOptional()) {
+						log.debug(buffer.toString() + "optional is skipped");
+						continue;
+					}
+					if (hasCycle(dependencyTree, dependency)) {
+						log.debug(buffer.toString()
+								+ "cylce found and needs to be skipped");
 						continue;
 					}
 					Artifact dependencyArtifact = DependencyUtilities
-							.buildArtifact(parentArtifact, dependency);
-					dependencyTree.addDependency(loadArtifacts(
-							dependencyArtifact, recursive, skipTestScope));
+							.buildArtifact(artifact, dependency);
+					loadArtifacts(depth + 1, dependencyTree,
+							dependencyArtifact, recursive, skipTestScope,
+							skipProvidedScope, skipOptionals);
 				}
 			}
 			return dependencyTree;
@@ -169,5 +200,46 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 			throw new MojoExecutionException(
 					"Could not load artifacts recursively.", e);
 		}
+	}
+
+	private boolean hasCycle(DependencyTree dependencyTree,
+			Dependency dependency) {
+		List<DependencyTree> path = new ArrayList<>();
+		while (dependencyTree != null) {
+			path.add(0, dependencyTree);
+			Artifact artifact = dependencyTree.getArtifact();
+			String artifactString = ArtifactUtilities.toString(artifact);
+			String dependencyString = ArtifactUtilities.toString(dependency);
+			if (artifactString.equals(dependencyString)) {
+				while (dependencyTree != null) {
+					path.add(0, dependencyTree);
+					dependencyTree = dependencyTree.getParent();
+				}
+				log.warn("WARNING! Cycle detected for '" + artifactString
+						+ "':");
+				for (int i = 0; i < path.size(); i++) {
+					DependencyTree node = path.get(i);
+					StringBuffer buffer = new StringBuffer();
+					for (int col = 0; col < i; col++) {
+						buffer.append("    ");
+					}
+					buffer.append("|-> ");
+					buffer.append(ArtifactUtilities.toString(node.getArtifact()));
+					log.warn(buffer.toString());
+				}
+				StringBuffer buffer = new StringBuffer();
+				buffer.append(" !! ");
+				for (int col = 0; col < path.size(); col++) {
+					buffer.append("    ");
+				}
+				buffer.append("|-> ");
+				buffer.append(artifactString);
+				buffer.append(" !! ");
+				log.warn(buffer.toString());
+				return true;
+			}
+			dependencyTree = dependencyTree.getParent();
+		}
+		return false;
 	}
 }

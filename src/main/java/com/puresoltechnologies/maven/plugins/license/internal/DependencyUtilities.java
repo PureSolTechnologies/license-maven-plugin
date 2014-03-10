@@ -43,11 +43,12 @@ public class DependencyUtilities {
 	 */
 	public static Artifact buildArtifact(Artifact parentArtifact,
 			Dependency dependency) {
-		Artifact dependencyArtifact = new DefaultArtifact(
+		DefaultArtifact dependencyArtifact = new DefaultArtifact(
 				dependency.getGroupId(), dependency.getArtifactId(),
 				dependency.getVersion(), dependency.getScope(),
 				dependency.getType(), dependency.getClassifier(),
 				parentArtifact.getArtifactHandler());
+		dependencyArtifact.setOptional(dependency.isOptional());
 		return dependencyArtifact;
 	}
 
