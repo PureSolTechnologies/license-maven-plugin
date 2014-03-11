@@ -55,18 +55,6 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	private ArtifactRepository localRepository;
 
 	/**
-	 * Keeps the reference to the logger.
-	 */
-	private final Log log;
-
-	/**
-	 * Default constructor.
-	 */
-	protected AbstractValidationMojo() {
-		log = getLog();
-	}
-
-	/**
 	 * This method returns the current {@link MavenProject}.
 	 * 
 	 * @return A {@link MavenProject} object is returned referencing the current
@@ -97,6 +85,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	 *         artifacts found.
 	 */
 	protected Set<Artifact> getArtifacts(boolean recursive) {
+		Log log = getLog();
 		if (recursive) {
 			log.info("Recursive license validation is enabled. All direct and transitive dependency artifacts are going to be checked.");
 			@SuppressWarnings("unchecked")
@@ -143,6 +132,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 			boolean skipProvidedScope, boolean skipOptionals)
 			throws MojoExecutionException {
 		try {
+			Log log = getLog();
 			MavenProject parentArtifactProject = mavenProjectBuilder
 					.buildFromRepository(artifact, remoteArtifactRepositories,
 							localRepository);
@@ -160,32 +150,44 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 					&& ((recursive) || (artifact == mavenProject.getArtifact()))) {
 				for (Dependency dependency : dependencies) {
 					StringBuffer buffer = new StringBuffer();
-					for (int i = 0; i < depth; i++) {
-						buffer.append("    ");
+					if (log.isDebugEnabled()) {
+						for (int i = 0; i < depth; i++) {
+							buffer.append("    ");
+						}
+						buffer.append("\\-> ");
+						log.debug(buffer.toString()
+								+ ArtifactUtilities.toString(dependency));
 					}
-					buffer.append("|-> ");
-					log.debug(buffer.toString()
-							+ ArtifactUtilities.toString(dependency));
 					if (skipTestScope
 							&& Artifact.SCOPE_TEST
 									.equals(dependency.getScope())) {
-						log.debug(buffer.toString() + "test scope is skipped");
+						if (log.isDebugEnabled()) {
+							log.debug(buffer.toString()
+									+ " >> test scope is skipped");
+						}
 						continue;
 					}
 					if (skipProvidedScope
 							&& Artifact.SCOPE_PROVIDED.equals(dependency
 									.getScope())) {
-						log.debug(buffer.toString()
-								+ "provided scope is skipped");
+						if (log.isDebugEnabled()) {
+							log.debug(buffer.toString()
+									+ " >> provided scope is skipped");
+						}
 						continue;
 					}
 					if (skipOptionals && dependency.isOptional()) {
-						log.debug(buffer.toString() + "optional is skipped");
+						if (log.isDebugEnabled()) {
+							log.debug(buffer.toString()
+									+ " >> optional is skipped");
+						}
 						continue;
 					}
 					if (hasCycle(dependencyTree, dependency)) {
-						log.debug(buffer.toString()
-								+ "cylce found and needs to be skipped");
+						if (log.isDebugEnabled()) {
+							log.debug(buffer.toString()
+									+ " >> cylce found and needs to be skipped");
+						}
 						continue;
 					}
 					Artifact dependencyArtifact = DependencyUtilities
@@ -204,6 +206,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 
 	private boolean hasCycle(DependencyTree dependencyTree,
 			Dependency dependency) {
+		Log log = getLog();
 		List<DependencyTree> path = new ArrayList<>();
 		while (dependencyTree != null) {
 			path.add(0, dependencyTree);
@@ -223,7 +226,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 					for (int col = 0; col < i; col++) {
 						buffer.append("    ");
 					}
-					buffer.append("|-> ");
+					buffer.append("\\-> ");
 					buffer.append(ArtifactUtilities.toString(node.getArtifact()));
 					log.warn(buffer.toString());
 				}
@@ -232,7 +235,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 				for (int col = 0; col < path.size(); col++) {
 					buffer.append("    ");
 				}
-				buffer.append("|-> ");
+				buffer.append("\\-> ");
 				buffer.append(artifactString);
 				buffer.append(" !! ");
 				log.warn(buffer.toString());

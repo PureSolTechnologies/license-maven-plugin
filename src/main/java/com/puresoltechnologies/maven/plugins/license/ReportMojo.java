@@ -19,7 +19,6 @@ import org.apache.maven.doxia.module.xhtml.decoration.render.RenderingContext;
 import org.apache.maven.doxia.siterenderer.sink.SiteRendererSink;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -80,11 +79,6 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	private boolean skipOptionals;
 
 	/**
-	 * Keeps the reference to the logger.
-	 */
-	private final Log log;
-
-	/**
 	 * This field is filled in {@link #readResults()} started from
 	 * {@link #generate(Sink)} with {@link ValidationResult}s.
 	 */
@@ -112,13 +106,6 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	 * This flag is set with {@link #readSettings()}.
 	 */
 	private boolean skipProvidedScope = true;
-
-	/**
-	 * Default constructor.s
-	 */
-	public ReportMojo() {
-		log = getLog();
-	}
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -159,7 +146,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	 * @throws MojoExecutionException
 	 */
 	private void readSettings() throws MojoExecutionException {
-		File file = IOUtilities.getSettingsFile(log, resultsDirectory);
+		File file = IOUtilities.getSettingsFile(getLog(), resultsDirectory);
 		try (FileInputStream fileOutputStream = new FileInputStream(file);
 				InputStreamReader propertiesReader = new InputStreamReader(
 						fileOutputStream, Charset.defaultCharset())) {
@@ -186,7 +173,8 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	 * @throws MojoExecutionException
 	 */
 	private void readResults() throws MojoExecutionException {
-		File resultsFile = IOUtilities.getResultsFile(log, resultsDirectory);
+		File resultsFile = IOUtilities.getResultsFile(getLog(),
+				resultsDirectory);
 		try (FileInputStream fileInputStream = new FileInputStream(resultsFile);
 				InputStreamReader inputStreamReader = new InputStreamReader(
 						fileInputStream, Charset.defaultCharset());
@@ -226,7 +214,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 	 */
 	private void generate(Sink sink) throws MavenReportException {
 		try {
-			log.info("Creating report for licenses.");
+			getLog().info("Creating report for licenses.");
 			generateHead(sink);
 			generateBody(sink);
 			sink.flush();
@@ -462,7 +450,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 			sink.listItem();
 			ArtifactInformation artifactInformation = new ArtifactInformation(
 					dependency.getArtifact());
-			log.debug("Hierarchy for " + artifactInformation.toString());
+			getLog().debug("Hierarchy for " + artifactInformation.toString());
 			sink.bold();
 			sink.text(artifactInformation.toString());
 			sink.bold_();
