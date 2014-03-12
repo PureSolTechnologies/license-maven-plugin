@@ -25,9 +25,9 @@
 	<packaging>maven-plugin</packaging>
 
 	<name>PureSol Technologies' Maven License Plugin</name>
-	<description>This is a simple license checker plugin for Maven.</description>
+	<description>This is a license checker plugin for Maven.</description>
 	<inceptionYear>2013</inceptionYear>
-	<url>http://oss.puresol-technologies.com/license-maven-plugin</url>
+	<url>http://opensource.puresol-technologies.com/license-maven-plugin</url>
 
 	<organization>
 		<name>PureSol Technologies</name>
@@ -43,9 +43,9 @@
 	</licenses>
 
 	<scm>
-		<developerConnection>scm:git:https://github.com/RickRainerLudwig/license-maven-plugin</developerConnection>
-		<connection>scm:git:https://github.com/RickRainerLudwig/license-maven-plugin</connection>
-		<url>https://github.com/RickRainerLudwig/license-maven-plugin.git</url>
+		<developerConnection>scm:git:https://github.com/PureSolTechnologies/license-maven-plugin</developerConnection>
+		<connection>scm:git:https://github.com/PureSolTechnologies/license-maven-plugin</connection>
+		<url>https://github.com/PureSolTechnologies/license-maven-plugin.git</url>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -73,7 +73,7 @@
 		<site>
 			<id>FTPPureSolTechnologiesCom</id>
 			<name>FTPPureSolTechnologiesCom</name>
-			<url>ftp://puresol-technologies.com/oss/license-maven-plugin</url>
+			<url>ftp://puresol-technologies.com/opensource/license-maven-plugin</url>
 		</site>
 	</distributionManagement>
 
