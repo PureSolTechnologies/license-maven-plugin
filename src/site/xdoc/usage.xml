@@ -14,7 +14,7 @@
 	<body>
 		<section name="Usage">
 			<p>
-				Sample plug-in configuration:
+				Sample plug-in configuration: 
 			</p>
 			<source>
 				&lt;plugins&gt;<br />
@@ -24,19 +24,35 @@
 				        &lt;version&gt;1.2.0&lt;/version&gt;<br />
 				        &lt;configuration&gt;<br />
 				            &lt;recursive&gt;true&lt;/recursive&gt;<br />
-				            &lt;validLicenses&gt;<br />
-				                &lt;validLicense&gt;PureSol Technologies Commercial License&lt;/validLicense&gt;<br />
+				            &lt;skipTestScope&gt;true&lt;/skipTestScope&gt;<br />
+				            &lt;skipProvidedScope&gt;true&lt;/skipProvidedScope&gt;<br />
+				            &lt;skipOptionals&gt;true&lt;/skipOptionals&gt;<br />
+				            &lt;knownLicenses&gt;<br />
+				                &lt;knownLicense&gt;
+				                    &lt;name&gt;PureSol Technologies Commercial License&lt;/name&gt;
+				                    &lt;url&gt;http://puresol-technologies.com&lt;/url&gt;
+				                &lt;/knownLicense&gt;<br />
 				                &lt;!-- Apache License --&gt;<br />
-				                &lt;validLicense&gt;Apache License, Version 2.0&lt;/validLicense&gt;<br />
-				                &lt;validLicense&gt;The Apache Software License, Version 2.0&lt;/validLicense&gt;<br />
-				                &lt;!-- MIT License --&gt;<br />
-				                &lt;validLicense&gt;MIT License&lt;/validLicense&gt;<br />
-				                &lt;validLicense&gt;The MIT License&lt;/validLicense&gt;<br />
-				            &lt;/validLicenses&gt;<br />
-				            &lt;approvedDependencies&gt;<br />
-				                &lt;approvedDependency&gt;p2.eclipse-plugin:.*:.*&lt;/approvedDependency&gt;<br />
-				                &lt;approvedDependency&gt;p2.eclipse-feature:.*:.*&lt;/approvedDependency&gt;<br />
-				            &lt;/approvedDependencies&gt;<br />
+				                &lt;knownLicense&gt;v
+				                    &lt;name&gt;Apache License, Version 2.0&lt;/name&gt;<br />
+				                    &lt;url&gt;http://www.apache.org/licenses/LICENSE-2.0.html&lt;/url&gt;<br />
+				                    &lt;aliases&gt;<br />
+				                        &lt;alias&gt;Apache 2&lt;/alias&gt;<br />
+				                        &lt;alias&gt;Apache License&lt;/alias&gt;<br />
+				                        &lt;alias&gt;Apache License 2.0&lt;/alias&gt;<br />
+				                        &lt;alias&gt;Apache License Version 2.0&lt;/alias&gt;<br />
+				                        &lt;alias&gt;Apache Software License - Version 2.0&lt;/alias&gt;<br />
+				                        &lt;alias&gt;The Apache Software License, Version 2.0&lt;/alias&gt;<br />
+				                    &lt;/aliases&gt;<br />
+				                    &lt;approvedDependencies&gt;<br />
+				                        &lt;approvedDependency&gt;commons-beanutils:commons-beanutils:1\.7\.0&lt;/approvedDependency&gt;<br />
+				                        &lt;approvedDependency&gt;commons-codec:commons-codec:1\.2&lt;/approvedDependency&gt;<br />
+				                        &lt;approvedDependency&gt;commons-logging:commons-logging:1\.0\.3&lt;/approvedDependency&gt;<br />
+				                        &lt;approvedDependency&gt;log4j:log4j:1\.2\.12&lt;/approvedDependency&gt;<br />
+				                        &lt;approvedDependency&gt;org\.apache.*:.*:.*&lt;/approvedDependency&gt;<br />
+				                    &lt;/approvedDependencies&gt;<br />
+				                &lt;/knownLicense&gt;<br />
+				            &lt;/knownLicenses&gt;<br />
 				        &lt;/configuration&gt;<br />
 				    &lt;/plugin&gt;<br />
 				&lt;/plugins&gt;<br />
@@ -46,13 +62,23 @@
 			</p>
 			<table>
 				<caption>Parameters for Configuration</caption>
-				<thead><tr><th>Parameter</th><th>Type</th><th>Description</th></tr></thead>
+				<thead>
+					<tr>
+						<th>Parameter</th>
+						<th>Type</th>
+						<th>Default Value</th>
+						<th>Description</th>
+					</tr>
+				</thead>
 				<tr>
 					<td>
 						<![CDATA[<recursive>]]>
 					</td>
 					<td>
 						(true/false)
+					</td>
+					<td>
+						true
 					</td>
 					<td>
 						Define whether or not the dependencies are checked recursively.
@@ -63,17 +89,92 @@
 				</tr>
 				<tr>
 					<td>
-						<![CDATA[<validLicenses>]]>
+						<![CDATA[<skipTestScope>]]>
+					</td>
+					<td>
+						(true/false)
+					</td>
+					<td>
+						true
+					</td>
+					<td>
+						Define whether or not the dependencies in test scope should
+						skipped.
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<![CDATA[<skipProvidedScope>]]>
+					</td>
+					<td>
+						(true/false)
+					</td>
+					<td>
+						true
+					</td>
+					<td>
+						Define whether or not the dependencies in provided scope should
+						skipped.
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<![CDATA[<skipOptionals>]]>
+					</td>
+					<td>
+						(true/false)
+					</td>
+					<td>
+						true
+					</td>
+					<td>
+						Define whether or not optional dependencies should skipped.
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<![CDATA[<knownLicenses>]]>
 					</td>
 					<td>
 						(List)
 					</td>
 					<td>
+					</td>
+					<td>
 						Define with
-						<![CDATA[<validLicense>]]>
-						the names of licenses which are valid to be
-						used in
-						the project.
+						<![CDATA[<knownLicense>]]>
+						the licenses which are known to the project.
+					</td>
+				</tr>
+				<tr>
+					<td><![CDATA[<name>]]></td>
+					<td>String</td>
+					<td></td>
+					<td>Specifies the official name of the license.</td>
+				</tr>
+				<tr>
+					<td><![CDATA[<url>]]></td>
+					<td>URL</td>
+					<td></td>
+					<td>Specifies an URL where the license text can be found.</td>
+				</tr>
+				<tr>
+					<td>
+						<![CDATA[<aliases>]]>
+					</td>
+					<td>
+						(List)
+					</td>
+					<td>
+						empty
+					</td>
+					<td>
+						Define with
+						<![CDATA[<alias>]]>
+						alternative names of the license. In some dependencies the
+						original
+						name of the license may be altered, simplified or
+						shortened.
 					</td>
 				</tr>
 				<tr>
@@ -82,6 +183,9 @@
 					</td>
 					<td>
 						(List)
+					</td>
+					<td>
+						empty
 					</td>
 					<td>
 						Define with
