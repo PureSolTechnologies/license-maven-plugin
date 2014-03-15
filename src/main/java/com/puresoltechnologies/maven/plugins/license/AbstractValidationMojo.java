@@ -131,77 +131,75 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 			boolean recursive, boolean skipTestScope,
 			boolean skipProvidedScope, boolean skipOptionals)
 			throws MojoExecutionException {
+		Log log = getLog();
+		MavenProject parentArtifactProject;
 		try {
-			Log log = getLog();
-			MavenProject parentArtifactProject = mavenProjectBuilder
-					.buildFromRepository(artifact, remoteArtifactRepositories,
-							localRepository);
-			@SuppressWarnings("unchecked")
-			List<Dependency> dependencies = parentArtifactProject
-					.getDependencies();
-			@SuppressWarnings("unchecked")
-			List<License> licenses = parentArtifactProject.getLicenses();
-			DependencyTree dependencyTree = new DependencyTree(artifact,
-					licenses);
-			if (parentDependencyTree != null) {
-				parentDependencyTree.addDependency(dependencyTree);
-			}
-			if ((dependencies != null)
-					&& ((recursive) || (artifact == mavenProject.getArtifact()))) {
-				for (Dependency dependency : dependencies) {
-					StringBuffer buffer = new StringBuffer();
-					if (log.isDebugEnabled()) {
-						for (int i = 0; i < depth; i++) {
-							buffer.append("    ");
-						}
-						buffer.append("\\-> ");
-						log.debug(buffer.toString()
-								+ ArtifactUtilities.toString(dependency));
-					}
-					if (skipTestScope
-							&& Artifact.SCOPE_TEST
-									.equals(dependency.getScope())) {
-						if (log.isDebugEnabled()) {
-							log.debug(buffer.toString()
-									+ " >> test scope is skipped");
-						}
-						continue;
-					}
-					if (skipProvidedScope
-							&& Artifact.SCOPE_PROVIDED.equals(dependency
-									.getScope())) {
-						if (log.isDebugEnabled()) {
-							log.debug(buffer.toString()
-									+ " >> provided scope is skipped");
-						}
-						continue;
-					}
-					if (skipOptionals && dependency.isOptional()) {
-						if (log.isDebugEnabled()) {
-							log.debug(buffer.toString()
-									+ " >> optional is skipped");
-						}
-						continue;
-					}
-					if (hasCycle(dependencyTree, dependency)) {
-						if (log.isDebugEnabled()) {
-							log.debug(buffer.toString()
-									+ " >> cylce found and needs to be skipped");
-						}
-						continue;
-					}
-					Artifact dependencyArtifact = DependencyUtilities
-							.buildArtifact(artifact, dependency);
-					loadArtifacts(depth + 1, dependencyTree,
-							dependencyArtifact, recursive, skipTestScope,
-							skipProvidedScope, skipOptionals);
-				}
-			}
-			return dependencyTree;
+			parentArtifactProject = mavenProjectBuilder.buildFromRepository(
+					artifact, remoteArtifactRepositories, localRepository);
 		} catch (ProjectBuildingException e) {
-			throw new MojoExecutionException(
-					"Could not load artifacts recursively.", e);
+			log.warn("Could not load artifacts recursively. For artifact '"
+					+ ArtifactUtilities.toString(artifact)
+					+ "' the project creation failed.", e);
+			return null;
 		}
+		@SuppressWarnings("unchecked")
+		List<Dependency> dependencies = parentArtifactProject.getDependencies();
+		@SuppressWarnings("unchecked")
+		List<License> licenses = parentArtifactProject.getLicenses();
+		DependencyTree dependencyTree = new DependencyTree(artifact, licenses);
+		if (parentDependencyTree != null) {
+			parentDependencyTree.addDependency(dependencyTree);
+		}
+		if ((dependencies != null)
+				&& ((recursive) || (artifact == mavenProject.getArtifact()))) {
+			for (Dependency dependency : dependencies) {
+				StringBuffer buffer = new StringBuffer();
+				if (log.isDebugEnabled()) {
+					for (int i = 0; i < depth; i++) {
+						buffer.append("    ");
+					}
+					buffer.append("\\-> ");
+					log.debug(buffer.toString()
+							+ ArtifactUtilities.toString(dependency));
+				}
+				if (skipTestScope
+						&& Artifact.SCOPE_TEST.equals(dependency.getScope())) {
+					if (log.isDebugEnabled()) {
+						log.debug(buffer.toString()
+								+ " >> test scope is skipped");
+					}
+					continue;
+				}
+				if (skipProvidedScope
+						&& Artifact.SCOPE_PROVIDED
+								.equals(dependency.getScope())) {
+					if (log.isDebugEnabled()) {
+						log.debug(buffer.toString()
+								+ " >> provided scope is skipped");
+					}
+					continue;
+				}
+				if (skipOptionals && dependency.isOptional()) {
+					if (log.isDebugEnabled()) {
+						log.debug(buffer.toString() + " >> optional is skipped");
+					}
+					continue;
+				}
+				if (hasCycle(dependencyTree, dependency)) {
+					if (log.isDebugEnabled()) {
+						log.debug(buffer.toString()
+								+ " >> cylce found and needs to be skipped");
+					}
+					continue;
+				}
+				Artifact dependencyArtifact = DependencyUtilities
+						.buildArtifact(artifact, dependency);
+				loadArtifacts(depth + 1, dependencyTree, dependencyArtifact,
+						recursive, skipTestScope, skipProvidedScope,
+						skipOptionals);
+			}
+		}
+		return dependencyTree;
 	}
 
 	private boolean hasCycle(DependencyTree dependencyTree,
