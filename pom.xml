@@ -21,7 +21,7 @@
 
 	<groupId>com.puresoltechnologies.maven.plugins</groupId>
 	<artifactId>license-maven-plugin</artifactId>
-	<version>1.2.1</version>
+	<version>1.2.2-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<name>PureSol Technologies' License Maven Plugin</name>
