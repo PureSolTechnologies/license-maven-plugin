@@ -100,11 +100,28 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
 	}
 
 	/**
-	 * This method retrievs all artifacts of the current Maven module.
+	 * This method retrieves all artifacts of the current Maven module.
 	 * 
-	 * @return A {@link Set} of {@link Artifact} is returned containing the
-	 *         artifacts found.
+	 * @param recursive
+	 *            is to be set to <code>true</code> is the dependencies shall be
+	 *            loaded recursively. <code>false</code> is set if wanted
+	 *            otherwise.
+	 * @param skipTestScope
+	 *            is to be set to <code>true</code> is artifacts in test scope
+	 *            are to be skipped and neglected. <code>false</code> is set if
+	 *            wanted otherwise.
+	 * @param skipProvidedScope
+	 *            is to be set to <code>true</code> if artifacts in provided
+	 *            scope are to be skipped and neglected. <code>false</code> is
+	 *            set if wanted otherwise.
+	 * @param skipOptionals
+	 *            is to be set to <code>true</code> if artifacts in optional
+	 *            scope are to be skipped and neglected. <code>false</code> is
+	 *            set if wanted otherwise.
+	 * @return A {@link DependencyTree} is returned containing the artifacts
+	 *         found.
 	 * @throws MojoExecutionException
+	 *             is thrown in cases of issues.
 	 */
 	protected DependencyTree loadArtifacts(boolean recursive,
 			boolean skipTestScope, boolean skipProvidedScope,

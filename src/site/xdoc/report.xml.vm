@@ -28,9 +28,9 @@
 				&lt;reporting&gt;<br />
 				    &lt;plugins&gt;<br />
 				        &lt;plugin&gt;<br />
-				            &lt;groupId&gt;com.puresol.maven.plugins&lt;/groupId&gt;<br />
-				            &lt;artifactId&gt;license-plugin&lt;/artifactId&gt;<br />
-				            &lt;version&gt;1.2.0&lt;/version&gt;<br />
+				            &lt;groupId&gt;${project.groupId}&lt;/groupId&gt;<br />
+				            &lt;artifactId&gt;${project.artifactId}&lt;/artifactId&gt;<br />
+				            &lt;version&gt;${project.version}&lt;/version&gt;<br />
 				        &lt;/plugin&gt;<br />
 				    &lt;/plugins&gt;<br />
 				&lt;/reporting&gt;<br />

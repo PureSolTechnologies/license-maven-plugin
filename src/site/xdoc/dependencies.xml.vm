@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document xmlns="http://maven.apache.org/XDOC/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
+
+	<properties>
+		<title>Usage</title>
+		<author email="ludwig@puresol-technologies.com">Rick-Rainer Ludwig</author>
+	</properties>
+
+	<!-- Optional HEAD element, which is copied as is into the XHTML <head> 
+		element -->
+	<!-- head> <meta . /> </head -->
+
+	<body>
+		<section name="Usage">
+			<p>
+				To use this Maven module in your project, you need to add the
+				following dependency to your Maven project:
+			</p>
+			<p>
+				<source><![CDATA[
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>${project.artifactId}</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+]]></source>
+			</p>
+			<p>
+				If this project was published at Maven Central, please have also a
+				look to the
+				<a
+					href="http://search.maven.org/#artifactdetails|${project.groupId}|${project.artifactId}|${project.version}|${project.packaging}">project page at Maven Central</a>
+				.
+			</p>
+			<p>
+				For other build tools use the following dependency information:
+			</p>
+			<table>
+				<thead>
+					<tr>
+						<th>Build Tool</th>
+						<th>Dependency</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							Apache Buildr
+						</td>
+						<td>
+							<source><![CDATA['${project.groupId}:${project.artifactId}:jar:${project.packaging}']]></source>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Apache Ivy
+						</td>
+						<td>
+							<source><![CDATA[<dependency org="${project.groupId}" name="${project.artifactId}" rev="${project.version}" />]]></source>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Groovy Grape
+						</td>
+						<td>
+							<source><![CDATA[@Grapes( 
+@Grab(group='${project.groupId}', module='${project.artifactId}', version='${project.version}') 
+)]]></source>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Gradle/Grails
+						</td>
+						<td>
+							<source><![CDATA[compile '${project.groupId}:${project.artifactId}:${project.packaging}']]></source>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Scala SBT
+						</td>
+						<td>
+							<source><![CDATA[libraryDependencies += "${project.groupId}" % "${project.artifactId}" % "${project.version}"]]></source>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Leiningen
+						</td>
+						<td>
+							<source><![CDATA[[${project.groupId}/${project.artifactId} "${project.version}"]]]></source>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</section>
+	</body>
+</document>                                              

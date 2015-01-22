@@ -41,9 +41,14 @@ public class IOUtilities {
 	/**
 	 * Creates a new and empty results file.
 	 * 
+	 * @param log
+	 *            is the {@link Log} to write to.
 	 * @param outputDirectory
-	 * @return
+	 *            is the directory for the output file.
+	 * @return A {@link File} object is returned pointing to the newly created
+	 *         results file.
 	 * @throws MojoExecutionException
+	 *             is thrown in case the file could not be created.
 	 */
 	public static File createNewResultsFile(Log log, File outputDirectory)
 			throws MojoExecutionException {
@@ -59,8 +64,10 @@ public class IOUtilities {
 	 * Returns the position of the results file.
 	 * 
 	 * @param log
+	 *            is the {@link Log} to write to.
 	 * @param outputDirectory
-	 * @return
+	 *            is the directory for the output file.
+	 * @return A {@link File} object is returned pointing to the results file.
 	 * @throws MojoExecutionException
 	 *             is thrown if no file is found.
 	 */
@@ -81,9 +88,14 @@ public class IOUtilities {
 	/**
 	 * Creates a new and empty settings file.
 	 * 
+	 * @param log
+	 *            is the {@link Log} to write to.
 	 * @param outputDirectory
-	 * @return
+	 *            is the directory for the output file.
+	 * @return A {@link File} object is returned pointing to the newly created
+	 *         settings file.
 	 * @throws MojoExecutionException
+	 *             is thrown in case the file could not be created.
 	 */
 	public static File createNewSettingsFile(Log log, File outputDirectory)
 			throws MojoExecutionException {
@@ -98,10 +110,12 @@ public class IOUtilities {
 	 * This method checks and returns the position of the settings file.
 	 * 
 	 * @param log
+	 *            is the {@link Log} to write to.
 	 * @param outputDirectory
-	 * @return
+	 *            is the directory for the output file.
+	 * @return A {@link File} object is returned pointing to the settings file.
 	 * @throws MojoExecutionException
-	 *             is thrown if the file cannot be found.
+	 *             is thrown in case the file could not be found.
 	 */
 	public static File getSettingsFile(Log log, File outputDirectory)
 			throws MojoExecutionException {
@@ -121,6 +135,8 @@ public class IOUtilities {
 	 * This method checks a directory for presence. If it is not existing, it
 	 * will be created.
 	 * 
+	 * @param log
+	 *            is the {@link Log} to write to.
 	 * @param directory
 	 *            is the directory to be checked and created if needed.
 	 * @throws MojoExecutionException
@@ -146,6 +162,8 @@ public class IOUtilities {
 	 * This method checks a file for presence. If it is not existing, it will be
 	 * created.
 	 * 
+	 * @param log
+	 *            is the {@link Log} to write to.
 	 * @param file
 	 *            is the directory to be checked and created if needed.
 	 * @throws MojoExecutionException
@@ -177,17 +195,18 @@ public class IOUtilities {
 	 * 
 	 * @param log
 	 *            is the Maven logger {@link Log}.
-	 * @param resultsFile
+	 * @param file
+	 *            is the files to be deleted if present.
 	 * @throws MojoExecutionException
+	 *             is thrown in cases of IO issues.
 	 */
-	public static void deleteFileIfPresent(Log log, File resultsFile)
+	public static void deleteFileIfPresent(Log log, File file)
 			throws MojoExecutionException {
-		if (resultsFile.exists()) {
+		if (file.exists()) {
 			log.debug("Results file exists. Delete it to remove obsolete results.");
-			if (!resultsFile.delete()) {
+			if (!file.delete()) {
 				throw new MojoExecutionException(
-						"Could not delete license results file '" + resultsFile
-								+ "'.");
+						"Could not delete license results file '" + file + "'.");
 			}
 		}
 	}
@@ -196,8 +215,12 @@ public class IOUtilities {
 	 * Writes a CSV file line with the given {@link ValidationResult}.
 	 * 
 	 * @param writer
+	 *            is the {@link Writer} to write to.
 	 * @param validationResult
+	 *            is the {@link ValidationResult} object which is to be written
+	 *            to the writer.
 	 * @throws MojoExecutionException
+	 *             is thrown in cases of IO issues.
 	 */
 	public static void writeResult(Writer writer,
 			ValidationResult validationResult) throws MojoExecutionException {
@@ -248,8 +271,11 @@ public class IOUtilities {
 	 * into a {@link ValidationResult}.
 	 * 
 	 * @param bufferedReader
-	 * @return
+	 *            is the {@link BufferedReader} to read from.
+	 * @return A {@link ValidationResult} is returned containing the read
+	 *         information.
 	 * @throws MojoExecutionException
+	 *             is thrown in case of IO issues.
 	 */
 	public static ValidationResult readResult(BufferedReader bufferedReader)
 			throws MojoExecutionException {
@@ -292,7 +318,8 @@ public class IOUtilities {
 	 * This method splits a single CSV line into junks of {@link String}.
 	 * 
 	 * @param line
-	 * @return
+	 *            is the line to be split.
+	 * @return An array of {@link String} is returned.
 	 */
 	protected static String[] split(String line) {
 		List<String> results = new ArrayList<>();
@@ -322,8 +349,11 @@ public class IOUtilities {
 	 * Stores any {@link Serializable} object into a file.
 	 * 
 	 * @param file
+	 *            is the file where the object is to be stored to.
 	 * @param object
+	 *            is the objec which is to be stored.
 	 * @throws IOException
+	 *             is thrown in cases of IO issues.
 	 */
 	public static void storeObject(File file, Serializable object)
 			throws IOException {
@@ -337,9 +367,13 @@ public class IOUtilities {
 	/**
 	 * This method returns a former serialized object from a file.
 	 * 
+	 * @param <T>
+	 *            is the actual type of the object read from the file.
 	 * @param file
-	 * @return
+	 *            is the file to read the object from.
+	 * @return An object T is returned which was read form the file.
 	 * @throws IOException
+	 *             is thrown in cases of IO issues.
 	 */
 	public static <T> T restoreObject(File file) throws IOException {
 		try (FileInputStream fileInputStream = new FileInputStream(file);

@@ -49,9 +49,11 @@ public class KnownLicense implements Serializable {
 	/**
 	 * This field contains the approved dependencies. The nomenclature is:
 	 * 
-	 * <groupId>:<artifactId>:<version>
+	 * <pre>
+	 * &lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;
+	 * </pre>
 	 * 
-	 * The content of <...> support regular expressions.
+	 * The content of &lt;...&gt; supports regular expressions.
 	 */
 	@Parameter(alias = "approvedDependencies", required = false)
 	private final Set<String> approvedDependencies = new HashSet<>();
@@ -110,7 +112,8 @@ public class KnownLicense implements Serializable {
 	/**
 	 * Set returns the {@link #valid} flag.
 	 * 
-	 * @return
+	 * @return <code>true</code> is returned if the license is valid.
+	 *         <code>false</code> is returned otherwise.
 	 */
 	public boolean isValid() {
 		return valid;
@@ -123,7 +126,8 @@ public class KnownLicense implements Serializable {
 	/**
 	 * Returns the {@link #aliases} {@link Set}.
 	 * 
-	 * @return
+	 * @return A {@link Set} of {@link String} is returned containing the alias
+	 *         names.
 	 */
 	public Set<String> getAliases() {
 		return aliases;
@@ -133,6 +137,8 @@ public class KnownLicense implements Serializable {
 	 * Sets a new {@link #aliases} {@link Set}.
 	 * 
 	 * @param aliases
+	 *            is a {@link Set} of {@link String} containing aliases for the
+	 *            license.
 	 */
 	public void setAliases(Set<String> aliases) {
 		this.aliases.clear();
@@ -142,7 +148,8 @@ public class KnownLicense implements Serializable {
 	/**
 	 * Returns the {@link #approvedDependencies} {@link Set}.
 	 * 
-	 * @return
+	 * @return A {@link Set} of {@link String} is returned containing names of
+	 *         dependencies which are approved.
 	 */
 	public Set<String> getApprovedDependencies() {
 		return approvedDependencies;
@@ -150,6 +157,10 @@ public class KnownLicense implements Serializable {
 
 	/**
 	 * Sets a new {@link #approvedDependencies} {@link Set}.
+	 * 
+	 * @param approvedDependencies
+	 *            is a {@link Set} of {@link String} which contains dependencies
+	 *            which are approved.
 	 */
 	public void setApprovedDependencies(Set<String> approvedDependencies) {
 		this.approvedDependencies.clear();

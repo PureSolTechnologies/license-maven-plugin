@@ -40,8 +40,8 @@ public class DependencyTree implements Iterable<DependencyTree> {
 	 * 
 	 * @param artifact
 	 *            is the {@link Artifact}.
-	 * @param license
-	 *            is the {@link License}.
+	 * @param licenses
+	 *            is the {@link List} of {@link License}.
 	 */
 	public DependencyTree(Artifact artifact, List<License> licenses) {
 		super();

@@ -19,9 +19,9 @@
 			<source>
 				&lt;plugins&gt;<br />
 				    &lt;plugin&gt;<br />
-				        &lt;groupId&gt;com.puresol.maven.plugins&lt;/groupId&gt;<br />
-				        &lt;artifactId&gt;license-plugin&lt;/artifactId&gt;<br />
-				        &lt;version&gt;1.2.0&lt;/version&gt;<br />
+			            &lt;groupId&gt;${project.groupId}&lt;/groupId&gt;<br />
+			            &lt;artifactId&gt;${project.artifactId}&lt;/artifactId&gt;<br />
+			            &lt;version&gt;${project.version}&lt;/version&gt;<br />
 				        &lt;configuration&gt;<br />
 				            &lt;recursive&gt;true&lt;/recursive&gt;<br />
 				            &lt;skipTestScope&gt;true&lt;/skipTestScope&gt;<br />
@@ -33,7 +33,7 @@
 				                    &lt;url&gt;http://puresol-technologies.com&lt;/url&gt;
 				                &lt;/knownLicense&gt;<br />
 				                &lt;!-- Apache License --&gt;<br />
-				                &lt;knownLicense&gt;v
+				                &lt;knownLicense&gt;
 				                    &lt;name&gt;Apache License, Version 2.0&lt;/name&gt;<br />
 				                    &lt;url&gt;http://www.apache.org/licenses/LICENSE-2.0.html&lt;/url&gt;<br />
 				                    &lt;aliases&gt;<br />
