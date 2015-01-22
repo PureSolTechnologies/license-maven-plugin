@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
-		<version>7</version>
+		<version>9</version>
 	</parent>
 
 	<groupId>com.puresoltechnologies.maven.plugins</groupId>
@@ -73,7 +73,7 @@
 		<site>
 			<id>FTPPureSolTechnologiesCom</id>
 			<name>FTPPureSolTechnologiesCom</name>
-			<url>ftp://puresol-technologies.com/opensource/license-maven-plugin</url>
+			<url>ftp://puresol-technologies.com/opensource.puresol-technologies.com/projects/license-maven-plugin/${project.version}</url>
 		</site>
 	</distributionManagement>
 
