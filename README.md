@@ -12,11 +12,11 @@ contain proprietary licenses.
 
 For usage information have a look to the license-maven-plugin website at:
 
-http://opensource.puresol-technologies.com/license-maven-plugin/usage.html
+http://opensource.puresol-technologies.com/projects/license-maven-plugin/usage.html
 
 General information about the project can be found at:      
 
-http://opensource.puresol-technologies.com/projects/license-maven-plugin
+http://opensource.puresol-technologies.com/license-maven-plugin
     
 Please, use the issue tracker at:
 
