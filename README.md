@@ -22,4 +22,4 @@ Please, use the issue tracker at:
 
 https://bugs.puresol-technologies.net/projects/license-maven-plugin
                                                   
-[![Build Status](http://ci.puresol-technologies.net/view/Maven%20Plugins/job/license-maven-plugin/badge/icon)](http://ci.puresol-technologies.net/view/Maven%20Plugins/job/license-maven-plugin/)
+[![Build Status](http://ci.puresol-technologies.net/job/license-maven-plugin/badge/icon)](http://ci.puresol-technologies.net/job/license-maven-plugin/)
