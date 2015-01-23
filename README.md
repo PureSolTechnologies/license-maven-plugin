@@ -12,7 +12,7 @@ contain proprietary licenses.
 
 For usage information have a look to the license-maven-plugin website at:
 
-http://opensource.puresol-technologies.com/projects/license-maven-plugin/usage.html
+http://opensource.puresol-technologies.com/projects/?p=license-maven-plugin
 
 General information about the project can be found at:      
 
