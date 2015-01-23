@@ -65,8 +65,8 @@
 	</issueManagement>
 
 	<ciManagement>
-		<system>Jenkins</system>
-		<url>https://travis-ci.org/RickRainerLudwig/license-maven-plugin</url>
+		<system>PureSol Technologies Jenkins</system>
+		<url>http://ci.puresol-technologies.net/job/license-maven-plugin</url>
 	</ciManagement>
 
 	<distributionManagement>
@@ -152,6 +152,53 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifestEntries>
+							<Specification-Title>${project.name}</Specification-Title>
+							<Specification-Version>${project.version}</Specification-Version>
+							<Specification-Vendor>${project.organization.name}</Specification-Vendor>
+							<Implementation-Title>${project.groupId}:${project.artifactId}</Implementation-Title>
+							<Implementation-Version>${project.version}</Implementation-Version>
+							<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+							<Vendor-URL>${project.organization.url}</Vendor-URL>
+							<Project-URL>${project.url}</Project-URL>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+						<configuration>
+							<archive>
+								<index>true</index>
+								<manifestEntries>
+									<Specification-Title>${project.name}</Specification-Title>
+									<Specification-Version>${project.version}</Specification-Version>
+									<Specification-Vendor>${project.organization.name}</Specification-Vendor>
+									<Implementation-Title>${project.groupId}:${project.artifactId}</Implementation-Title>
+									<Implementation-Version>${project.version}</Implementation-Version>
+									<Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+									<Vendor-URL>${project.organization.url}</Vendor-URL>
+									<Project-URL>${project.url}</Project-URL>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-plugin-plugin</artifactId>
 				<version>${mavenPluginPluginVersion}</version>
 				<configuration>
@@ -187,20 +234,6 @@
 				<executions>
 					<execution>
 						<id>package-javadoc</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.2.1</version>
-				<executions>
-					<execution>
-						<id>package-source</id>
 						<phase>package</phase>
 						<goals>
 							<goal>jar</goal>
