@@ -139,7 +139,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
     /**
      * Reads the settings from the former validate run and fills {@link #recursive}
      * and {@link #skipTestScope}.
-     * 
+     *
      * @throws MojoExecutionException
      */
     private void readSettings() throws MojoExecutionException {
@@ -161,7 +161,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
     /**
      * Reads the results off the validation results file into field
      * {@link #results}.
-     * 
+     *
      * @throws MojoExecutionException
      */
     private void readResults() throws MojoExecutionException {
@@ -185,6 +185,9 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
                     artifactResults.add(validationResult);
                 }
             }
+            if (results.isEmpty()) {
+                throw new MojoExecutionException("Could not read any results from '" + resultsFile + "'.");
+            }
         } catch (IOException e) {
             throw new MojoExecutionException(
                     "Could not read license validation resultsf from file '" + resultsFile + "'.");
@@ -193,7 +196,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
     /**
      * This method start the actual generation of the report.
-     * 
+     *
      * @param sink
      * @throws MavenReportException
      */
@@ -210,7 +213,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
     /**
      * Generated the report's HTML head.
-     * 
+     *
      * @param sink
      */
     private void generateHead(Sink sink) {
@@ -223,7 +226,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
     /**
      * Generated the HTML's body.
-     * 
+     *
      * @param sink
      * @throws MavenReportException
      */
@@ -266,7 +269,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
     /**
      * This method generated the table with the direct dependencies.
-     * 
+     *
      * @param sink
      * @throws MavenReportException
      */
@@ -334,19 +337,20 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
         for (DependencyTree dependency : dependencyTree) {
             ArtifactInformation artifactInformation = new ArtifactInformation(dependency.getArtifact());
             List<ValidationResult> validationResults = results.get(artifactInformation);
-            for (ValidationResult validationResult : validationResults) {
-                String originalLicenseName = validationResult.getOriginalLicenseName();
-                if (!licenses.containsKey(originalLicenseName)) {
-                    licenses.put(originalLicenseName, validationResult);
+            if (validationResults != null) {
+                for (ValidationResult validationResult : validationResults) {
+                    String originalLicenseName = validationResult.getOriginalLicenseName();
+                    if (!licenses.containsKey(originalLicenseName)) {
+                        licenses.put(originalLicenseName, validationResult);
+                    }
                 }
             }
-
         }
     }
 
     /**
      * This method generated the table with the transitive dependencies.
-     * 
+     *
      * @param sink
      * @throws MavenReportException
      */
@@ -404,7 +408,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
     /**
      * Generates the hierarchy of the dependencies.
-     * 
+     *
      * @param sink
      */
     private void generateDependencyHierachy(Sink sink) {
@@ -417,7 +421,7 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
 
     /**
      * Generates the hierarchy of the dependencies recursively.
-     * 
+     *
      * @param sink
      */
     private void generateDependency(Sink sink, DependencyTree parentDependency) {
@@ -429,27 +433,30 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
             sink.bold();
             sink.text(artifactInformation.toString());
             sink.bold_();
-            for (ValidationResult result : results.get(artifactInformation)) {
-                KnownLicense license = result.getLicense();
-                String originalLicenseName = result.getOriginalLicenseName();
-                URL originalLicenseURL = result.getOriginalLicenseURL();
-                String valid = result.isValid() ? "valid" : "invalid";
-                sink.lineBreak();
-                sink.italic();
-                sink.text(valid);
-                sink.text(": ");
-                if (originalLicenseURL == null) {
-                    sink.text(originalLicenseName);
-                } else {
-                    sink.link(originalLicenseURL.toString());
-                    sink.text(originalLicenseName);
+            List<ValidationResult> validationResults = results.get(artifactInformation);
+            if (validationResults != null) {
+                for (ValidationResult result : validationResults) {
+                    KnownLicense license = result.getLicense();
+                    String originalLicenseName = result.getOriginalLicenseName();
+                    URL originalLicenseURL = result.getOriginalLicenseURL();
+                    String valid = result.isValid() ? "valid" : "invalid";
+                    sink.lineBreak();
+                    sink.italic();
+                    sink.text(valid);
+                    sink.text(": ");
+                    if (originalLicenseURL == null) {
+                        sink.text(originalLicenseName);
+                    } else {
+                        sink.link(originalLicenseURL.toString());
+                        sink.text(originalLicenseName);
+                        sink.link_();
+                    }
+                    sink.text(" / ");
+                    sink.link(license.getUrl().toString());
+                    sink.text(license.getName());
                     sink.link_();
+                    sink.italic_();
                 }
-                sink.text(" / ");
-                sink.link(license.getUrl().toString());
-                sink.text(license.getName());
-                sink.link_();
-                sink.italic_();
             }
             sink.lineBreak();
             generateDependency(sink, dependency);

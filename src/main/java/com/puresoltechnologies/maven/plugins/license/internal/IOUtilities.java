@@ -210,7 +210,7 @@ public class IOUtilities {
             }
             String comment = validationResult.getComment();
             boolean valid = validationResult.isValid();
-            writer.write(groupId + "," + artifactId + "," + version + "," + classifier + "," + type + "," + scope
+            writer.write(groupId + "," + artifactId + ",\"" + version + "\"," + classifier + "," + type + "," + scope
                     + ",\"" + licenseName + "\"," + licenseURL + ",\"" + originalLicenseName + "\","
                     + originalLicenseURL.toString() + ",\"" + comment + "\"," + String.valueOf(valid) + "\n");
         } catch (IOException e) {
