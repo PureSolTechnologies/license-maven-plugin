@@ -53,7 +53,7 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 )
 @Execute(//
         goal = "generate-report", //
-        phase = LifecyclePhase.GENERATE_SOURCES//
+        phase = LifecyclePhase.PRE_SITE //
 )
 @SuppressWarnings("deprecation")
 public class ReportMojo extends AbstractValidationMojo implements MavenReport {
@@ -184,9 +184,6 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
                 if (!artifactResults.contains(validationResult)) {
                     artifactResults.add(validationResult);
                 }
-            }
-            if (results.isEmpty()) {
-                throw new MojoExecutionException("Could not read any results from '" + resultsFile + "'.");
             }
         } catch (IOException e) {
             throw new MojoExecutionException(
@@ -337,12 +334,10 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
         for (DependencyTree dependency : dependencyTree) {
             ArtifactInformation artifactInformation = new ArtifactInformation(dependency.getArtifact());
             List<ValidationResult> validationResults = results.get(artifactInformation);
-            if (validationResults != null) {
-                for (ValidationResult validationResult : validationResults) {
-                    String originalLicenseName = validationResult.getOriginalLicenseName();
-                    if (!licenses.containsKey(originalLicenseName)) {
-                        licenses.put(originalLicenseName, validationResult);
-                    }
+            for (ValidationResult validationResult : validationResults) {
+                String originalLicenseName = validationResult.getOriginalLicenseName();
+                if (!licenses.containsKey(originalLicenseName)) {
+                    licenses.put(originalLicenseName, validationResult);
                 }
             }
         }
@@ -434,29 +429,27 @@ public class ReportMojo extends AbstractValidationMojo implements MavenReport {
             sink.text(artifactInformation.toString());
             sink.bold_();
             List<ValidationResult> validationResults = results.get(artifactInformation);
-            if (validationResults != null) {
-                for (ValidationResult result : validationResults) {
-                    KnownLicense license = result.getLicense();
-                    String originalLicenseName = result.getOriginalLicenseName();
-                    URL originalLicenseURL = result.getOriginalLicenseURL();
-                    String valid = result.isValid() ? "valid" : "invalid";
-                    sink.lineBreak();
-                    sink.italic();
-                    sink.text(valid);
-                    sink.text(": ");
-                    if (originalLicenseURL == null) {
-                        sink.text(originalLicenseName);
-                    } else {
-                        sink.link(originalLicenseURL.toString());
-                        sink.text(originalLicenseName);
-                        sink.link_();
-                    }
-                    sink.text(" / ");
-                    sink.link(license.getUrl().toString());
-                    sink.text(license.getName());
+            for (ValidationResult result : validationResults) {
+                KnownLicense license = result.getLicense();
+                String originalLicenseName = result.getOriginalLicenseName();
+                URL originalLicenseURL = result.getOriginalLicenseURL();
+                String valid = result.isValid() ? "valid" : "invalid";
+                sink.lineBreak();
+                sink.italic();
+                sink.text(valid);
+                sink.text(": ");
+                if (originalLicenseURL == null) {
+                    sink.text(originalLicenseName);
+                } else {
+                    sink.link(originalLicenseURL.toString());
+                    sink.text(originalLicenseName);
                     sink.link_();
-                    sink.italic_();
                 }
+                sink.text(" / ");
+                sink.link(license.getUrl().toString());
+                sink.text(license.getName());
+                sink.link_();
+                sink.italic_();
             }
             sink.lineBreak();
             generateDependency(sink, dependency);

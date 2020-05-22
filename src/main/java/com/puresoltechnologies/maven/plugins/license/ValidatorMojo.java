@@ -62,7 +62,7 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
  * @author Rick-Rainer Ludwig
  */
 @Mojo(//
-        name = "validate", //
+        name = "verify", //
         requiresDirectInvocation = false, //
         requiresProject = true, //
         requiresReports = false, //
@@ -73,8 +73,8 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
         requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME//
 )
 @Execute(//
-        goal = "validate", //
-        phase = LifecyclePhase.VALIDATE//
+        goal = "verify", //
+        phase = LifecyclePhase.VERIFY //
 )
 public class ValidatorMojo extends AbstractValidationMojo {
 

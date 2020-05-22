@@ -83,7 +83,9 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
      */
     protected DependencyTree loadArtifacts(boolean recursive, boolean skipTestScope, boolean skipProvidedScope,
             boolean skipOptionals) throws MojoExecutionException {
-        return loadArtifacts(0, null, mavenProject, recursive, skipTestScope, skipProvidedScope, skipOptionals);
+        DependencyTree dependencyTree = createDependencyTreeNode(mavenProject);
+        loadArtifacts(0, dependencyTree, mavenProject, recursive, skipTestScope, skipProvidedScope, skipOptionals);
+        return dependencyTree;
     }
 
     /**
@@ -96,19 +98,18 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
      * @return A {@link DependencyTree} object is returned.
      * @throws MojoExecutionException is thrown if anything unexpected goes wrong.
      */
-    private DependencyTree loadArtifacts(int depth, DependencyTree parentDependencyTree, MavenProject project,
-            boolean recursive, boolean skipTestScope, boolean skipProvidedScope, boolean skipOptionals)
-            throws MojoExecutionException {
+    private void loadArtifacts(int depth, DependencyTree dependencyTreeNode, MavenProject project, boolean recursive,
+            boolean skipTestScope, boolean skipProvidedScope, boolean skipOptionals) throws MojoExecutionException {
+        if ((recursive) || (depth == 0)) {
+            processDependencies(depth, dependencyTreeNode, project, recursive, skipTestScope, skipProvidedScope,
+                    skipOptionals);
+        }
+    }
+
+    private DependencyTree createDependencyTreeNode(MavenProject project) {
         @SuppressWarnings("unchecked")
         List<License> licenses = project.getLicenses();
         DependencyTree dependencyTree = new DependencyTree(project.getArtifact(), licenses);
-        if (parentDependencyTree != null) {
-            parentDependencyTree.addDependency(dependencyTree);
-        }
-        if ((recursive) || (depth == 0)) {
-            processDependencies(depth, dependencyTree, project, recursive, skipTestScope, skipProvidedScope,
-                    skipOptionals);
-        }
         return dependencyTree;
     }
 
@@ -164,9 +165,10 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
         try {
             MavenProject dependencyProject = mavenProjectBuilder.buildFromRepository(dependencyArtifact,
                     remoteArtifactRepositories, localRepository);
-
-            loadArtifacts(depth + 1, dependencyTree, dependencyProject, recursive, skipTestScope, skipProvidedScope,
-                    skipOptionals);
+            DependencyTree childDependencyTree = createDependencyTreeNode(dependencyProject);
+            dependencyTree.addDependency(childDependencyTree);
+            loadArtifacts(depth + 1, childDependencyTree, dependencyProject, recursive, skipTestScope,
+                    skipProvidedScope, skipOptionals);
         } catch (ProjectBuildingException e) {
             log.warn("Could not load artifacts recursively. For artifact '"
                     + ArtifactUtilities.toString(project.getArtifact()) + "' the project creation failed.", e);
