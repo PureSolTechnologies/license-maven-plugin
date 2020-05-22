@@ -248,10 +248,15 @@ public class IOUtilities {
             try {
                 licenseURL = new URL(splits[7]);
             } catch (MalformedURLException e) {
-                log.warn("Malformed URL '" + splits[7] + "' was found.");
+                log.warn("Malformed license URL '" + splits[7] + "' was found.");
             }
             String originalLicenseName = splits[8];
-            URL originalLicenseURL = new URL(splits[9]);
+            URL originalLicenseURL = null;
+            try {
+                originalLicenseURL = new URL(splits[9]);
+            } catch (MalformedURLException e) {
+                log.warn("Malformed original license URL '" + splits[9] + "' was found.");
+            }
             String comment = splits[10];
             boolean valid = Boolean.valueOf(splits[11]);
             ArtifactInformation artifactInformation = new ArtifactInformation(groupId, artifactId, version, classifier,
