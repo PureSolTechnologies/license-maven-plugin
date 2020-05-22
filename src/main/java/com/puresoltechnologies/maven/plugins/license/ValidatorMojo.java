@@ -1,12 +1,12 @@
 /*
  * Copyright 2013 PureSol Technologies
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,9 @@
  */
 package com.puresoltechnologies.maven.plugins.license;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -51,20 +49,20 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 /**
  * This class is a Maven Mojo to check the validity of licenses specified in the
  * dependencies of a maven module.
- * 
+ *
  * Used to configure injection of Plexus components by
  * MavenPluginManager.getConfiguredMojo(...) and special Maven objects as well:
- * 
+ *
  * mojoExecution org.apache.maven.plugin.MojoExecution project
  * org.apache.maven.project.MavenProject session
  * org.apache.maven.execution.MavenSession settings
  * org.apache.maven.settings.Settings plugin (Maven-3 only)
  * org.apache.maven.plugin.descriptor.PluginDescriptor
- * 
+ *
  * @author Rick-Rainer Ludwig
  */
 @Mojo(//
-	name = "validate", //
+	name = "verify", //
 	requiresDirectInvocation = false, //
 	requiresProject = true, //
 	requiresReports = false, //
@@ -75,8 +73,8 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
 	requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME//
 )
 @Execute(//
-	goal = "validate", //
-	phase = LifecyclePhase.VALIDATE//
+	goal = "verify", //
+	phase = LifecyclePhase.VERIFY //
 )
 public class ValidatorMojo extends AbstractValidationMojo {
 
@@ -132,8 +130,9 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
     private void storeSettings() throws MojoExecutionException {
 	File file = IOUtilities.createNewSettingsFile(getLog(), outputDirectory);
-	try (OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-		OutputStreamWriter propertiesWriter = new OutputStreamWriter(outputStream, Charset.defaultCharset())) {
+	try (FileOutputStream fileOutputStream = new FileOutputStream(file);
+		OutputStreamWriter propertiesWriter = new OutputStreamWriter(fileOutputStream,
+			Charset.defaultCharset())) {
 	    Properties properties = new Properties();
 	    properties.setProperty("recursive", Boolean.toString(recursive));
 	    properties.setProperty("skipTestScope", Boolean.toString(skipTestScope));
@@ -147,18 +146,15 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
     /**
      * This method checks a set of artifacts for validity.
-     * 
-     * @param dependencies
-     *            is a {@link Set} of {@link Artifact} which is to be checked for
-     *            validity.
-     * @throws MojoExecutionException
-     *             is throw if the execution was faulty.
-     * @throws MojoFailureException
-     *             is thrown if an invalid license is found.
+     *
+     * @param dependencies is a {@link Set} of {@link Artifact} which is to be
+     *                     checked for validity.
+     * @throws MojoExecutionException is throw if the execution was faulty.
+     * @throws MojoFailureException   is thrown if an invalid license is found.
      */
     private void validateArtifacts(DependencyTree dependencyTree) throws MojoExecutionException, MojoFailureException {
 	File licenseResultsFile = IOUtilities.createNewResultsFile(getLog(), outputDirectory);
-	try (OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(licenseResultsFile));
+	try (FileOutputStream outputStream = new FileOutputStream(licenseResultsFile);
 		OutputStreamWriter writer = new OutputStreamWriter(outputStream, Charset.defaultCharset())) {
 	    boolean valid = true;
 	    List<String> checkedArtifact = new ArrayList<>();
@@ -190,19 +186,14 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
     /**
      * This method checks the validity of a single artifact.
-     * 
-     * @param writer
-     * 
-     * @param artifact
-     *            is the {@link Artifact} to be checked for validity.
+     *
+     * @param artifact is the {@link Artifact} to be checked for validity.
      * @return <code>true</code> is returned if the license is valid.
      *         <code>false</code> is returned otherwise.
-     * @throws MojoFailureException
-     *             is thrown if {@link #failFast} is set to <code>true</code> and
-     *             the license is invalid to enforce the fail fast behavior
-     *             requested.
-     * @throws MojoExecutionException
-     *             is thrown in case of a faulty Maven run.
+     * @throws MojoFailureException   is thrown if {@link #failFast} is set to
+     *                                <code>true</code> and the license is invalid
+     *                                to enforce the fail fast behavior requested.
+     * @throws MojoExecutionException is thrown in case of a faulty Maven run.
      */
     private boolean isArtifactValid(DependencyTree dependency, OutputStreamWriter writer)
 	    throws MojoFailureException, MojoExecutionException {
@@ -210,10 +201,11 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	ArtifactInformation artifactInformation = new ArtifactInformation(artifact);
 
 	if (skipTestScope) {
-	    if (TEST_SCOPE_NAME.equals(artifact.getScope())) {
+	    String scope = artifact.getScope();
+	    if ((scope != null) && (TEST_SCOPE_NAME.equals(scope.toLowerCase()))) {
 		ValidationResult result = new ValidationResult(artifactInformation, null, null, null, "test scope",
 			true);
-		logArtifactResult(writer, result);
+		logArtifactResult(result, writer);
 		return true;
 	    }
 	}
@@ -224,12 +216,12 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	    if (knownLicense != null) {
 		ValidationResult result = new ValidationResult(artifactInformation, knownLicense, null, null,
 			"no license found, but dependency is approved", true);
-		logArtifactResult(writer, result);
+		logArtifactResult(result, writer);
 		return true;
 	    } else {
 		ValidationResult result = new ValidationResult(artifactInformation, null, null, null,
 			"no license found and artifact is not approved", false);
-		logArtifactResult(writer, result);
+		logArtifactResult(result, writer);
 		return false;
 	    }
 	}
@@ -246,17 +238,17 @@ public class ValidatorMojo extends AbstractValidationMojo {
 	    if (knownLicense != null) {
 		ValidationResult result = new ValidationResult(artifactInformation, knownLicense, licenseName,
 			licenseURL, "license is approved by artifact", true);
-		logArtifactResult(writer, result);
+		logArtifactResult(result, writer);
 	    } else {
 		knownLicense = findKnownLicense(artifactInformation, license);
 		if (knownLicense != null) {
 		    ValidationResult result = new ValidationResult(artifactInformation, knownLicense, licenseName,
 			    licenseURL, "license is approved", true);
-		    logArtifactResult(writer, result);
+		    logArtifactResult(result, writer);
 		} else {
 		    ValidationResult result = new ValidationResult(artifactInformation, null, licenseName, licenseURL,
 			    "license is not approved", false);
-		    logArtifactResult(writer, result);
+		    logArtifactResult(result, writer);
 		    valid = false;
 		}
 	    }
@@ -266,15 +258,14 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
     /**
      * This method returns the normalized name of the license.
-     * 
+     *
      * @param artifactInformation
-     * 
-     * @param license
-     *            is the {@link License} object which is to be looked up.
+     *
+     * @param license             is the {@link License} object which is to be
+     *                            looked up.
      * @return A {@link KnownLicense} is returned containing the known license.
-     * @throws MojoFailureException
-     *             is thrown if the normalized name cannot be looked up due to
-     *             missing configuration.
+     * @throws MojoFailureException is thrown if the normalized name cannot be
+     *                              looked up due to missing configuration.
      */
     private KnownLicense findKnownLicense(ArtifactInformation artifactInformation, License license)
 	    throws MojoFailureException {
@@ -310,22 +301,18 @@ public class ValidatorMojo extends AbstractValidationMojo {
 
     /**
      * This method is used to log results with Maven log {@link Log}.
-     * 
-     * @param writer
-     * 
-     * @param artifact
-     *            is the {@link Artifact} which was checked for validity.
-     * @param validationResult
-     *            is the {@link ValidationResult} of the check.
-     * @param licenseOrApprovalMessage
-     *            is the message to be printed containing the license or the appoval
-     *            message.
+     *
+     * @param artifact                 is the {@link Artifact} which was checked for
+     *                                 validity.
+     * @param validationResult         is the {@link ValidationResult} of the check.
+     * @param licenseOrApprovalMessage is the message to be printed containing the
+     *                                 license or the appoval message.
      * @param knownLicense
      * @throws MojoExecutionException
      * @throws IOException
      * @throws MojoFailureException
      */
-    private void logArtifactResult(OutputStreamWriter writer, ValidationResult validationResult)
+    private void logArtifactResult(ValidationResult validationResult, OutputStreamWriter writer)
 	    throws MojoExecutionException, MojoFailureException {
 	StringBuffer buffer = new StringBuffer();
 	buffer.append("License ");
