@@ -157,7 +157,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
         }
         if (hasCycle(dependencyTree, dependency)) {
             if (log.isDebugEnabled()) {
-                log.debug(buffer.toString() + " >> cylce found and needs to be skipped");
+                log.warn(buffer.toString() + " >> cylce found and needs to be skipped");
             }
             return;
         }
@@ -184,11 +184,11 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
             String artifactString = ArtifactUtilities.toString(artifact);
             String dependencyString = ArtifactUtilities.toString(dependency);
             if (artifactString.equals(dependencyString)) {
+                log.debug("WARNING! Cycle detected for '" + artifactString + "':");
                 while (dependencyTree != null) {
                     path.add(0, dependencyTree);
                     dependencyTree = dependencyTree.getParent();
                 }
-                log.warn("WARNING! Cycle detected for '" + artifactString + "':");
                 for (int i = 0; i < path.size(); i++) {
                     DependencyTree node = path.get(i);
                     StringBuffer buffer = new StringBuffer();

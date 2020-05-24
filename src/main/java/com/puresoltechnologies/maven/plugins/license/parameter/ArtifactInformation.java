@@ -28,7 +28,7 @@ public class ArtifactInformation implements Serializable {
         this.version = version;
         this.classifier = classifier == null ? "" : classifier;
         this.type = type;
-        this.scope = scope != null ? scope : "compile";
+        this.scope = scope;
     }
 
     public ArtifactInformation(Artifact artifact) {
