@@ -33,8 +33,6 @@ import org.apache.maven.model.License;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugins.annotations.Execute;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -71,10 +69,6 @@ import com.puresoltechnologies.maven.plugins.license.parameter.ValidationResult;
         threadSafe = true, //
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, //
         requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME//
-)
-@Execute(//
-        goal = "verify", //
-        phase = LifecyclePhase.VERIFY //
 )
 public class ValidatorMojo extends AbstractValidationMojo {
 

@@ -2,7 +2,6 @@ package com.puresoltechnologies.maven.plugins.license;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -64,43 +63,6 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
         return mavenProject;
     }
 
-    /**
-     * This method returns a {@link MavenProjectBuilder}.
-     *
-     * @return A {@link MavenProjectBuilder} is returned.
-     */
-    protected final MavenProjectBuilder getProjectBuilder() {
-        return mavenProjectBuilder;
-    }
-
-    /**
-     * This method retrieves all artifacts of the current Maven module.
-     *
-     * <b>Attention(!):</b> This method uses
-     * {@link MavenProject#getDependencyArtifacts()} and
-     * {@link MavenProject#getArtifacts()} which are lazily filled with the
-     * artifacts.
-     *
-     * @return A {@link Set} of {@link Artifact} is returned containing the
-     *         artifacts found.
-     */
-    protected Set<Artifact> getArtifacts(boolean recursive) {
-        Log log = getLog();
-        if (recursive) {
-            log.info(
-                    "Recursive license validation is enabled. All direct and transitive dependency artifacts are going to be checked.");
-            @SuppressWarnings("unchecked")
-            Set<Artifact> set = mavenProject.getArtifacts();
-            return set;
-        } else {
-            log.info(
-                    "Recursive license validation is disabled. All only direct dependency artifacts are going to be checked.");
-            @SuppressWarnings("unchecked")
-            Set<Artifact> set = mavenProject.getDependencyArtifacts();
-            return set;
-        }
-    }
-
     private DependencyTree createTreeNode(Artifact artifact) {
         MavenProject parentArtifactProject;
         try {
@@ -111,9 +73,7 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
                     + "' the project creation failed.", e);
             return null;
         }
-        @SuppressWarnings("unchecked")
         List<Dependency> dependencies = parentArtifactProject.getDependencies();
-        @SuppressWarnings("unchecked")
         List<License> licenses = parentArtifactProject.getLicenses();
         return new DependencyTree(artifact, dependencies, licenses);
 
@@ -141,10 +101,9 @@ public abstract class AbstractValidationMojo extends AbstractMojo {
             boolean skipOptionals) throws MojoExecutionException {
         Artifact artifact = mavenProject.getArtifact();
         DependencyTree treeRoot = createTreeNode(artifact);
-        if (treeRoot == null) {
-            return null;
+        if (treeRoot != null) {
+            processArtifact(0, treeRoot, artifact, recursive, skipTestScope, skipProvidedScope, skipOptionals);
         }
-        processArtifact(0, treeRoot, artifact, recursive, skipTestScope, skipProvidedScope, skipOptionals);
         return treeRoot;
     }
 
